@@ -1,0 +1,3 @@
+[submodule "lagom-service-locator-zookeeper"]
+	path = lagom-service-locator-zookeeper
+	url = https://github.com/jboner/lagom-service-locator-zookeeper.git
