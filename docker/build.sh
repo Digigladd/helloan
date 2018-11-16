@@ -1,4 +1,8 @@
 #!/bin/sh
+docker stack rm helloan-publication
+docker stack rm helloan-seance
+docker stack rm helloan-sync
+
 cd /root/docker/helloan
 sbt clean docker:publishLocal
 
