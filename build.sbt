@@ -37,11 +37,17 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
     )
   )
   .settings(
-    dockerExposedPorts := Seq(9000),
-    dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/sync",
-    dockerCommands += Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils")
+    dockerCommands := Seq(
+      Cmd("FROM","openjdk:alpine"),
+      Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils"),
+      Cmd("WORKDIR","/opt/docker"),
+      Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
+      Cmd("EXPOSE","9000"),
+      Cmd("USER","daemon"),
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl")
+    )
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-utils`,`helloan-sync-api`)
@@ -81,11 +87,17 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
     )
   )
   .settings(
-    dockerExposedPorts := Seq(9000),
-    dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/publication",
-    dockerCommands += Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils")
+    dockerCommands := Seq(
+      Cmd("FROM","openjdk:alpine"),
+      Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils"),
+      Cmd("WORKDIR","/opt/docker"),
+      Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
+      Cmd("EXPOSE","9000"),
+      Cmd("USER","daemon"),
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl")
+    )
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-seance-api`,`helloan-utils`)
@@ -122,8 +134,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl"),
-      ExecCmd("CMD", "echo", "Hello!")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl")
     )
   )
   .settings(lagomForkedTestSettings: _*)
