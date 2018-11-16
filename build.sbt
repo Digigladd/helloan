@@ -27,7 +27,6 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
-      persistenceCassandra,
       lagomJavadslKafkaBroker,
       lagomLogback,
       lagomJavadslTestKit,
@@ -80,7 +79,6 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
-      persistenceCassandra,
       lagomJavadslKafkaBroker,
       lagomLogback,
       lagomJavadslTestKit,
@@ -119,7 +117,6 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
-      persistenceCassandra,
       lagomJavadslKafkaBroker,
       lagomLogback,
       lagomJavadslTestKit,
