@@ -34,9 +34,8 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
     )
   )
   .settings(
-    packageName in Docker := "helloan-sync",
-    version in Docker := "1.0",
-    dockerRepository := Some("digigladd")
+    dockerExposedPorts := Seq(80),
+    dockerEntrypoint := Seq("/rp-start")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-utils`,`helloan-sync-api`)
@@ -76,9 +75,8 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
     )
   )
   .settings(
-    packageName in Docker := "helloan-publication",
-    version in Docker := "1.0",
-    dockerRepository := Some("digigladd")
+    dockerExposedPorts := Seq(80),
+    dockerEntrypoint := Seq("/rp-start")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-seance-api`,`helloan-utils`)
@@ -106,9 +104,8 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     )
   )
   .settings(
-    packageName in Docker := "helloan-seance",
-    version in Docker := "1.0",
-    dockerRepository := Some("digigladd")
+    dockerExposedPorts := Seq(80),
+    dockerEntrypoint := Seq("/rp-start")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-seance-api`,`helloan-utils`)
