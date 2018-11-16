@@ -9,6 +9,7 @@ services:
       - HOSTNAME=service
       - CAS_NATIVE=tcp://${CAS}:9042
       - KAFKA_NATIVE=tcp://${KAFKA}:9092
+      - CAS=${CAS}
     networks:
       - default
     ports:

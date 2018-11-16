@@ -30,6 +30,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       lagomJavadslKafkaBroker,
       lagomLogback,
       lagomJavadslTestKit,
+      persistenceCassandra,
       lombok,
       akkaHttp,
       akkaStream,
@@ -146,7 +147,7 @@ val akkaStream = "com.typesafe.akka" %% "akka-stream" % "2.5.16"
 val apacheCommonsIO = "commons-io" % "commons-io" % "2.6"
 val apacheCommonsCompress = "org.apache.commons" % "commons-compress" % "1.18"
 val cassandraExtras = "com.datastax.cassandra" % "cassandra-driver-extras" % "3.2.0"
-val persistenceCassandra = "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.91"
+val persistenceCassandra = "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.89"
 
 def common = Seq(
   javacOptions in compile += "-parameters"
