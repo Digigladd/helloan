@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.net.URI;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,12 @@ public class SeanceServiceImpl implements SeanceService {
 							 ActorSystem system) {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
+		try {
+			URI uri = new URI("tcp://reactivebox_cas_native:9042/cas_native");
+			log.info("URI host {}", uri.getHost());
+		}catch (Exception e) {
+			log.error("prout {}",e);
+		}
 	}
 	
 	@Override
