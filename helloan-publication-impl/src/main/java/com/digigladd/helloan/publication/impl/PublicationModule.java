@@ -28,11 +28,14 @@ public class PublicationModule extends AbstractModule implements ServiceGuiceSup
 	
 	@Override
 	protected void configure() {
-		bindService(PublicationService.class, PublicationServiceImpl.class);
-		bindClient(SyncService.class);
-		bindClient(SeanceService.class);
+		
 		if (environment.isProd()) {
 			bind(ServiceLocator.class).to(ConfigurationServiceLocator.class);
 		}
+		
+		bindService(PublicationService.class, PublicationServiceImpl.class);
+		bindClient(SyncService.class);
+		bindClient(SeanceService.class);
+		
 	}
 }
