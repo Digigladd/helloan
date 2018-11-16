@@ -4,10 +4,12 @@ services:
 
   service:
     image: digigladd/helloan/sync:1.0
+    container_name: sync
     environment:
       - CAS_NATIVE=tcp://reactivebox_cas_native:9042
       - KAFKA_NATIVE=tcp://reactivebox_kafka:9092
       - APPLICATION_SECRET=jenesuispasunheros
+      - HOSTNAME=sync
     networks:
       - default
     ports:
