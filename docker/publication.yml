@@ -1,0 +1,20 @@
+version: '3.2'
+
+services:
+
+  service:
+    image: digigladd/helloan/publication:1.0
+    environment:
+      - CAS_NATIVE=tcp://reactivebox_cas_native:9042
+      - KAFKA_NATIVE=tcp://reactivebox_kafka:9092
+      - SYNC_SERVICE=http://helloan-sync_service:9002
+      - SEANCE_SERVICE=http://helloan-seance_service:9001
+    networks:
+      - default
+    ports:
+      - "9003:9000"
+
+networks:
+  default:
+    external:
+      name: digigladd

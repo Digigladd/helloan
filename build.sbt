@@ -33,6 +33,10 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       apacheCommonsIO
     )
   )
+  .settings(
+    packageName in Docker := "digigladd/helloan/sync",
+    version in Docker := "1.0"
+  )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-utils`,`helloan-sync-api`)
 
@@ -70,6 +74,10 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
       cassandraExtras
     )
   )
+  .settings(
+    packageName in Docker := "digigladd/helloan/publication",
+    version in Docker := "1.0"
+  )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-seance-api`,`helloan-utils`)
 
@@ -94,6 +102,10 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
       lombok,
       cassandraExtras
     )
+  )
+  .settings(
+    packageName in Docker := "digigladd/helloan/seance",
+    version in Docker := "1.0"
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-seance-api`,`helloan-utils`)
