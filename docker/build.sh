@@ -1,5 +1,6 @@
 #!/bin/sh
-
+CAS=$(docker container ls -f "name=reactivebox_cas_native" -q | xargs -n 1 docker inspect --format '{{.NetworkSettings.Networks.digigladd.IPAddress}}')
+KAFKA=docker container ls -f "name=reactivebox_kafka" -q | xargs -n 1 docker inspect --format '{{.NetworkSettings.Networks.digigladd.IPAddress}}'
 wait() {
 	echo "Testing service!"
 	PORT=$1
