@@ -4,12 +4,11 @@ services:
 
   service:
     image: digigladd/helloan/seance:1.0
-    container_name: seance
     environment:
       - CAS_NATIVE=tcp://reactivebox_cas_native:9042
       - KAFKA_NATIVE=tcp://reactivebox_kafka:9092
       - APPLICATION_SECRET=jenesuispasunheros
-      - HOSTNAME=seance
+      - HOSTNAME=service
     networks:
       - default
     ports:

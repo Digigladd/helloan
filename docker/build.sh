@@ -21,7 +21,7 @@ docker stack rm helloan-seance
 docker stack rm helloan-sync
 
 cd /root/docker/helloan
-
+sleep 10
 sbt clean docker:clean
 sbt docker:publishLocal
 
