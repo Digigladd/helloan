@@ -2,7 +2,7 @@
 
 wait() {
 	echo "Testing service!"
-	PORT = $1
+	PORT=$1
 	while true
 	do
 	  STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:$PORT/status)
