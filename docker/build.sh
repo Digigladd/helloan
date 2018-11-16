@@ -5,7 +5,8 @@ docker stack rm helloan-sync
 
 cd /root/docker/helloan
 
-sbt clean docker:clean docker:publishLocal
+sbt clean docker:clean
+sbt docker:publishLocal
 
 cd docker/
 echo "deploying helloan seance"
