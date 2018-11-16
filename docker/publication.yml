@@ -12,7 +12,7 @@ services:
     networks:
       - default
     ports:
-      - "9003:80"
+      - "9003:9000"
 
 networks:
   default:

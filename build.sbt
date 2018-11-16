@@ -19,7 +19,7 @@ lazy val `helloan-sync-api` = (project in file("helloan-sync-api"))
   .dependsOn(`helloan-utils`)
 
 lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
-  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
+  .enablePlugins(LagomJava, JavaAppPackaging)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -34,8 +34,8 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
     )
   )
   .settings(
-    dockerExposedPorts := Seq(80),
-    dockerEntrypoint := Seq("/rp-start")
+    dockerExposedPorts := Seq(9000),
+    packageName in Docker := "helloan-sync"
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-utils`,`helloan-sync-api`)
@@ -62,7 +62,7 @@ lazy val `helloan-publication-api` = (project in file("helloan-publication-api")
   )
 
 lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl"))
-  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
+  .enablePlugins(LagomJava, JavaAppPackaging)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -75,8 +75,8 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
     )
   )
   .settings(
-    dockerExposedPorts := Seq(80),
-    dockerEntrypoint := Seq("/rp-start")
+    dockerExposedPorts := Seq(9000),
+    packageName in Docker := "helloan-publication"
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-seance-api`,`helloan-utils`)
@@ -91,7 +91,7 @@ lazy val `helloan-seance-api` = (project in file("helloan-seance-api"))
   )
 
 lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
-  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
+  .enablePlugins(LagomJava, JavaAppPackaging)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -104,8 +104,8 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     )
   )
   .settings(
-    dockerExposedPorts := Seq(80),
-    dockerEntrypoint := Seq("/rp-start")
+    dockerExposedPorts := Seq(9000),
+    packageName in Docker := "helloan-seance"
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-seance-api`,`helloan-utils`)
