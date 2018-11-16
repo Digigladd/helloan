@@ -130,6 +130,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     enableAkkaClusterBootstrap := true,
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/seance",
+    dockerEntrypoint := Seq("/rp-start", "bin/helloan-seance-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-seance-api`,`helloan-utils`)
