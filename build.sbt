@@ -35,6 +35,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
   )
   .settings(
     dockerExposedPorts := Seq(9000),
+    dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/sync"
   )
@@ -77,6 +78,7 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
   )
   .settings(
     dockerExposedPorts := Seq(9000),
+    dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/publication"
   )
@@ -107,6 +109,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
   )
   .settings(
     dockerExposedPorts := Seq(9000),
+    dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/seance"
   )
