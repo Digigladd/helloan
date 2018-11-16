@@ -44,7 +44,7 @@ public class SeanceServiceImpl implements SeanceService {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
 		try {
-			URI uri = new URI("tcp://reactivebox_cas_native:9042/cas_native");
+			URI uri = new URI("tcp://127.0.0.1:9042/cas_native");
 			log.info("URI host {}", uri.getHost());
 		}catch (Exception e) {
 			log.error("prout {}",e);
