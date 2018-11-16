@@ -46,7 +46,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-sync-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
