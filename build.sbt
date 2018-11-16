@@ -46,7 +46,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -96,7 +96,7 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -134,7 +134,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
