@@ -6,11 +6,11 @@ cd docker/
 echo "deploying helloan seance"
 docker stack deploy -c seance.yml helloan-seance
 
-wait(9001)
+wait 9001
 
 docker stack deploy -c sync.yml helloan-sync
 
-wait(9002)
+wait 9002
 
 docker stack deploy -c publication.yml helloan-publication
 
