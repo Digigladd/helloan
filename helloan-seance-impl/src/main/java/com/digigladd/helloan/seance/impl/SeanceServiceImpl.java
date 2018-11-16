@@ -43,12 +43,7 @@ public class SeanceServiceImpl implements SeanceService {
 							 ActorSystem system) {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
-		try {
-			URI uri = new URI("tcp://127.0.0.1:9042/cas_native");
-			log.info("URI host {}", uri.getHost());
-		}catch (Exception e) {
-			log.error("prout {}",e);
-		}
+		
 	}
 	
 	@Override
