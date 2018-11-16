@@ -22,7 +22,7 @@ lazy val `helloan-sync-api` = (project in file("helloan-sync-api"))
   .dependsOn(`helloan-utils`)
 
 lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
-  .enablePlugins(LagomJava, JavaAppPackaging)
+  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -74,7 +74,7 @@ lazy val `helloan-publication-api` = (project in file("helloan-publication-api")
   )
 
 lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl"))
-  .enablePlugins(LagomJava, JavaAppPackaging)
+  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -112,7 +112,7 @@ lazy val `helloan-seance-api` = (project in file("helloan-seance-api"))
   )
 
 lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
-  .enablePlugins(LagomJava, JavaAppPackaging)
+  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
