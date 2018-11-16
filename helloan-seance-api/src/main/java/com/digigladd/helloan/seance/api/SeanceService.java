@@ -26,7 +26,7 @@ public interface SeanceService extends Service {
 				.withCalls(
 						pathCall("/api/seance/pull", this::pull),
 						pathCall("/api/seance/:id/:session", this::get),
-						pathCall("/api/seance/status", this::status)
+						pathCall("/status", this::status)
 				)
 				.withAutoAcl(true);
 	}

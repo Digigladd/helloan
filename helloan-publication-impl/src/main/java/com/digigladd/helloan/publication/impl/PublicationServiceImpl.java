@@ -6,6 +6,7 @@ package com.digigladd.helloan.publication.impl;
 
 import akka.Done;
 import akka.NotUsed;
+import akka.japi.Pair;
 import akka.stream.javadsl.Flow;
 import com.digigladd.helloan.publication.api.Publication;
 import com.digigladd.helloan.publication.api.PublicationService;
@@ -17,8 +18,11 @@ import com.digigladd.helloan.sync.api.SyncService;
 import com.digigladd.helloan.utils.ArchiveParser;
 import com.digigladd.helloan.utils.Metadonnees;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
+import com.lightbend.lagom.javadsl.api.transport.ResponseHeader;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
+import com.lightbend.lagom.javadsl.server.HeaderServiceCall;
+import com.lightbend.lagom.javadsl.server.ServerServiceCall;
 import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
 import org.slf4j.Logger;
@@ -30,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class PublicationServiceImpl implements PublicationService {
 	private final PersistentEntityRegistry persistentEntityRegistry;
@@ -127,6 +132,14 @@ public class PublicationServiceImpl implements PublicationService {
 				);
 	}
 	
+	@Override
+	public ServerServiceCall<NotUsed, NotUsed> status() {
+		return HeaderServiceCall.of((requestHeader, request) -> {
+			ResponseHeader responseHeader = ResponseHeader.OK;
+			return completedFuture(Pair.create(responseHeader, NotUsed.getInstance()));
+		});
+	}
+	
 	private Publication toPublication(com.digigladd.helloan.publication.impl.Publication publication) {
 		return new Publication(
 				publication.dateParution,
@@ -142,4 +155,5 @@ public class PublicationServiceImpl implements PublicationService {
 				)
 		);
 	}
+	
 }

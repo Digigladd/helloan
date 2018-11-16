@@ -21,12 +21,15 @@ public interface PublicationService extends Service {
 	
 	ServiceCall<NotUsed, PSequence<Publication>> listPublications();
 	
+	ServiceCall<NotUsed, NotUsed> status();
+	
 	@Override
 	default Descriptor descriptor() {
 		return named("publication")
 				.withCalls(
 						pathCall("/api/publication/:numeroGrebiche", this::getPublication),
-						pathCall("/api/publications", this::listPublications)
+						pathCall("/api/publications", this::listPublications),
+						pathCall("/status", this::status)
 				)
 				.withAutoAcl(true);
 	}
