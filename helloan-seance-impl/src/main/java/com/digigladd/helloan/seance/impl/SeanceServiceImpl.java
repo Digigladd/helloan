@@ -6,7 +6,9 @@ package com.digigladd.helloan.seance.impl;
 
 import akka.Done;
 import akka.NotUsed;
+import akka.actor.ActorSystem;
 import akka.japi.Pair;
+import akka.management.AkkaManagement;
 import com.digigladd.helloan.seance.api.Evenement;
 import com.digigladd.helloan.seance.api.PullSeance;
 import com.digigladd.helloan.seance.api.SeanceService;
@@ -31,9 +33,11 @@ public class SeanceServiceImpl implements SeanceService {
 	private final Logger log = LoggerFactory.getLogger(SeanceServiceImpl.class);
 	
 	@Inject
-	public SeanceServiceImpl(PersistentEntityRegistry persistentEntityRegistry) {
+	public SeanceServiceImpl(PersistentEntityRegistry persistentEntityRegistry,
+							 ActorSystem system) {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
+		AkkaManagement.get(system).start();
 	}
 	
 	@Override

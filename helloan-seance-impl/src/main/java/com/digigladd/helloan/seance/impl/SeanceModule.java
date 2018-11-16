@@ -4,7 +4,6 @@
 
 package com.digigladd.helloan.seance.impl;
 
-
 import com.digigladd.helloan.seance.api.SeanceService;
 import com.google.inject.AbstractModule;
 import com.lightbend.lagom.javadsl.api.ServiceLocator;
@@ -33,6 +32,5 @@ public class SeanceModule extends AbstractModule implements ServiceGuiceSupport,
 		}
 		
 		bindService(SeanceService.class, SeanceServiceImpl.class);
-		
 	}
 }
