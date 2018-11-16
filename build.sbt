@@ -1,3 +1,6 @@
+import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.dockerCommands
+import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
+
 organization in ThisBuild := "com.digigladd"
 version in ThisBuild := "1.0-SNAPSHOT"
 
@@ -37,7 +40,8 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
     dockerExposedPorts := Seq(9000),
     dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
-    packageName in Docker := "digigladd/helloan/sync"
+    packageName in Docker := "digigladd/helloan/sync",
+    dockerCommands += Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-utils`,`helloan-sync-api`)
@@ -80,7 +84,8 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
     dockerExposedPorts := Seq(9000),
     dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
-    packageName in Docker := "digigladd/helloan/publication"
+    packageName in Docker := "digigladd/helloan/publication",
+    dockerCommands += Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-seance-api`,`helloan-utils`)
@@ -111,7 +116,8 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     dockerExposedPorts := Seq(9000),
     dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
-    packageName in Docker := "digigladd/helloan/seance"
+    packageName in Docker := "digigladd/helloan/seance",
+    dockerCommands += Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils")
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-seance-api`,`helloan-utils`)
