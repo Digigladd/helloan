@@ -113,11 +113,18 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     )
   )
   .settings(
-    dockerExposedPorts := Seq(9000),
-    dockerBaseImage := "openjdk:alpine",
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/seance",
-    dockerCommands += Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils")
+    dockerCommands := Seq(
+      Cmd("FROM","openjdk:alpine"),
+      Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils"),
+      Cmd("WORKDIR","/opt/docker"),
+      Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
+      Cmd("EXPOSE","9000"),
+      Cmd("USER","daemon"),
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl"),
+      ExecCmd("CMD", "echo", "Hello!")
+    )
   )
   .settings(lagomForkedTestSettings: _*)
   .dependsOn(`helloan-seance-api`,`helloan-utils`)
