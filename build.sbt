@@ -37,6 +37,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
     )
   )
   .settings(
+    enableAkkaClusterBootstrap := true,
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/sync",
     dockerCommands := Seq(
@@ -87,6 +88,7 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
     )
   )
   .settings(
+    enableAkkaClusterBootstrap := true,
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/publication",
     dockerCommands := Seq(
@@ -125,6 +127,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     )
   )
   .settings(
+    enableAkkaClusterBootstrap := true,
     version in Docker := "1.0",
     packageName in Docker := "digigladd/helloan/seance",
     dockerCommands := Seq(
