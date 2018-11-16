@@ -15,8 +15,11 @@ import com.digigladd.helloan.seance.api.SeanceService;
 import com.digigladd.helloan.seance.api.Valeur;
 import com.digigladd.helloan.utils.*;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
+import com.lightbend.lagom.javadsl.api.transport.ResponseHeader;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
+import com.lightbend.lagom.javadsl.server.HeaderServiceCall;
+import com.lightbend.lagom.javadsl.server.ServerServiceCall;
 import org.pcollections.PSequence;
 import org.pcollections.TreePVector;
 import org.slf4j.Logger;
@@ -25,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class SeanceServiceImpl implements SeanceService {
 	
@@ -37,7 +42,6 @@ public class SeanceServiceImpl implements SeanceService {
 							 ActorSystem system) {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
-		AkkaManagement.get(system).start();
 	}
 	
 	@Override
@@ -71,6 +75,14 @@ public class SeanceServiceImpl implements SeanceService {
 					)
 			);
 		};
+	}
+	
+	@Override
+	public ServerServiceCall<NotUsed, NotUsed> status() {
+		return HeaderServiceCall.of((requestHeader, request) -> {
+			ResponseHeader responseHeader = ResponseHeader.OK;
+			return completedFuture(Pair.create(responseHeader, NotUsed.getInstance()));
+		});
 	}
 	
 	private SeanceTag convert(Object tag) {
