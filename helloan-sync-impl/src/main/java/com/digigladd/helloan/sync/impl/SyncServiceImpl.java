@@ -6,6 +6,7 @@ import com.digigladd.helloan.sync.api.SyncStatus;
 import com.digigladd.helloan.utils.Constants;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
 import com.lightbend.lagom.javadsl.api.broker.Topic;
+import com.lightbend.lagom.javadsl.api.transport.ResponseHeader;
 import com.lightbend.lagom.javadsl.broker.TopicProducer;
 import com.lightbend.lagom.javadsl.persistence.Offset;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
@@ -15,8 +16,12 @@ import javax.inject.Inject;
 
 import com.digigladd.helloan.sync.api.SyncService;
 import com.digigladd.helloan.sync.impl.SyncCommand.*;
+import com.lightbend.lagom.javadsl.server.HeaderServiceCall;
+import com.lightbend.lagom.javadsl.server.ServerServiceCall;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 /**
  * Implementation of the SyncService.
@@ -40,6 +45,14 @@ public class SyncServiceImpl implements SyncService {
                     syncState -> syncState.toSyncStatus()
             );
         };
+    }
+    
+    @Override
+    public ServerServiceCall<NotUsed, NotUsed> status() {
+        return HeaderServiceCall.of((requestHeader, request) -> {
+            ResponseHeader responseHeader = ResponseHeader.OK;
+            return completedFuture(Pair.create(responseHeader, NotUsed.getInstance()));
+        });
     }
     
     @Override

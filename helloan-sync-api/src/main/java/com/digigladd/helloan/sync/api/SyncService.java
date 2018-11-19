@@ -24,11 +24,14 @@ public interface SyncService extends Service {
     
     Topic<SyncEvent> syncEvents();
     
+    ServiceCall<NotUsed, NotUsed> status();
+    
     @Override
     default Descriptor descriptor() {
         return named("sync")
                 .withCalls(
-                        pathCall("/api/sync/hello", this::hello)
+                        pathCall("/api/sync/hello", this::hello),
+                        pathCall("/status", this::status)
                 )
                 .withTopics(
                         topic(Constants.SYNC_EVENTS, this::syncEvents)
