@@ -39,7 +39,7 @@ public interface SyncCommand extends CompressedJsonable {
     @SuppressWarnings("serial")
     @Value
     @JsonDeserialize
-    final class AddYear implements SyncCommand, PersistentEntity.ReplyType<SyncState> {
+    final class AddYear implements SyncCommand, PersistentEntity.ReplyType<Done> {
         private final String year;
         
         @JsonCreator
@@ -65,7 +65,7 @@ public interface SyncCommand extends CompressedJsonable {
     @SuppressWarnings("serial")
     @Value
     @JsonDeserialize
-    final class FetchDataset implements SyncCommand, PersistentEntity.ReplyType<SyncState> {
+    final class FetchDataset implements SyncCommand, PersistentEntity.ReplyType<Done> {
         private final String ref;
         private final Long size;
         

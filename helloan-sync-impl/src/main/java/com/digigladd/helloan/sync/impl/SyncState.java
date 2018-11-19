@@ -1,17 +1,14 @@
 package com.digigladd.helloan.sync.impl;
 
-import com.digigladd.helloan.sync.api.SyncDataset;
 import com.digigladd.helloan.sync.api.SyncStatus;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.lightbend.lagom.serialization.CompressedJsonable;
 import lombok.Value;
+import org.pcollections.PSequence;
+import org.pcollections.TreePVector;
 
-import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,14 +19,16 @@ import java.util.stream.Collectors;
 @Value
 @JsonDeserialize
 public final class SyncState implements CompressedJsonable {
-    public final List<String> parsedYears;
-    public final List<Dataset> datasets;
+    public final PSequence<String> parsedYears;
+    public final PSequence<Dataset> datasets;
     public final Optional<LocalDateTime> lastParsed;
+    
+    public static final SyncState EMPTY = new SyncState(Optional.empty(), Optional.empty(), Optional.empty());
 
     @JsonCreator
-    public SyncState(Optional<List<String>> parsedYears, Optional<List<Dataset>> datasets, Optional<LocalDateTime> lastParsed) {
-        this.parsedYears = parsedYears.orElse(new ArrayList<>());
-        this.datasets = datasets.orElse(new ArrayList<>());
+    public SyncState(Optional<PSequence<String>> parsedYears, Optional<PSequence<Dataset>> datasets, Optional<LocalDateTime> lastParsed) {
+        this.parsedYears = parsedYears.orElse(TreePVector.empty());
+        this.datasets = datasets.orElse(TreePVector.empty());
         this.lastParsed = lastParsed;
     }
     
@@ -59,28 +58,5 @@ public final class SyncState implements CompressedJsonable {
         return new Dataset(ref, Optional.of(size), Optional.of(true));
     }
     
-    @SuppressWarnings("serial")
-    @Value
-    @JsonDeserialize
-    public final class Dataset implements CompressedJsonable {
-        public final String ref;
-        public final Long size;
-        public final Boolean fetched;
-        
-        @JsonCreator
-        public Dataset(String ref, Optional<Long> size, Optional<Boolean> fetched) {
-            this.ref = Objects.requireNonNull(ref, "ref");
-            this.size = size.orElse(0L);
-            this.fetched = fetched.orElse(false);
-        }
-        
-        public SyncDataset toSyncStatusDataset() {
-            
-            return new SyncDataset(
-              this.ref,
-              Optional.of(this.size),
-              Optional.of(this.fetched)
-            );
-        }
-    }
+    
 }

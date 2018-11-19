@@ -45,9 +45,10 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils"),
       Cmd("WORKDIR","/opt/docker"),
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
+      Cmd("RUN", "mkdir", "/opt/docker/datasets"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-sync-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-sync-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M", "-Dconfig.resource=production.conf")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -80,6 +81,7 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
+      persistenceCassandra,
       lagomJavadslKafkaBroker,
       lagomLogback,
       lagomJavadslTestKit,
@@ -95,9 +97,10 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
       Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils"),
       Cmd("WORKDIR","/opt/docker"),
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
+      Cmd("RUN", "mkdir", "/opt/docker/datasets"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M", "-Dconfig.resource=production.conf")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -118,6 +121,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
+      persistenceCassandra,
       lagomJavadslKafkaBroker,
       lagomLogback,
       lagomJavadslTestKit,
@@ -133,9 +137,10 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
       Cmd("RUN", "/sbin/apk", "add", "--no-cache", "bash", "coreutils"),
       Cmd("WORKDIR","/opt/docker"),
       Cmd("ADD","--chown=daemon:daemon", "opt", "/opt"),
+      Cmd("RUN", "mkdir", "/opt/docker/datasets"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M","-Dconfig.resource=production.conf")
     )
   )
   .settings(lagomForkedTestSettings: _*)

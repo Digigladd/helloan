@@ -5,6 +5,7 @@ import com.digigladd.helloan.sync.impl.actors.SyncActor;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 
 import com.digigladd.helloan.sync.impl.SyncCommand.*;
+import org.pcollections.TreePVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
     private final Logger log = LoggerFactory.getLogger(SyncEntity.class);
     @Override
     public Behavior initialBehavior(Optional<SyncState> snapshotState) {
+        
         BehaviorBuilder b = newBehaviorBuilder(
             snapshotState.orElse(new SyncState(Optional.empty(), Optional.empty(), Optional.empty()))
         );
@@ -42,7 +44,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
             if (state().addYear(cmd.getYear())) {
                 log.info("Sync need to add {}", cmd.getYear());
                 final SyncEvent.YearAdded yearAdded = new SyncEvent.YearAdded(cmd.getYear());
-                return ctx.thenPersist(yearAdded, evt -> ctx.reply(state()));
+                return ctx.thenPersist(yearAdded, evt -> ctx.reply(Done.getInstance()));
             } else {
                 return ctx.done();
             }
@@ -50,7 +52,8 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         
         b.setCommandHandler(FetchDataset.class, (cmd, ctx) -> {
             final SyncEvent.DatasetFetched datasetFetched = new SyncEvent.DatasetFetched(cmd.getRef(),cmd.getSize());
-            return ctx.thenPersist(datasetFetched, evt -> ctx.reply(state()));
+            
+            return ctx.thenPersist(datasetFetched, evt -> ctx.reply(Done.getInstance()));
         });
 
         b.setReadOnlyCommandHandler(Get.class, (cmd, ctx) -> {
@@ -68,12 +71,12 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
             return new SyncState(
                     Optional.of(state().getParsedYears()),
                     Optional.of(
-                            Stream.concat(
+                            TreePVector.from(Stream.concat(
                                 state().getDatasets().stream(),
                                 evt.datasets.stream().map(
                                     m -> state().createDataset(m)
                                 )
-                            ).collect(Collectors.toList())
+                            ).collect(Collectors.toList()))
                     ),
                     lastParsed
             );
@@ -88,10 +91,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
             }
             return new SyncState(
                     Optional.of(
-                            Stream.concat(
-                                    state().getParsedYears().stream(),
-                                    Stream.of(evt.getYear())
-                            ).collect(Collectors.toList())
+                            state().getParsedYears().plusAll(Stream.of(evt.getYear()).collect(Collectors.toList()))
                     ),
                     Optional.of(state().getDatasets()),
                     lastParsed
@@ -102,7 +102,8 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
             log.info("Dataset fetched {}: {} bytes", evt.ref, evt.size);
             return new SyncState(
               Optional.of(state().getParsedYears()),
-              Optional.of(state().getDatasets().stream().map(
+              Optional.of(
+                      TreePVector.from(state().getDatasets().stream().map(
                       dataset -> {
                           if (dataset.ref == evt.ref) {
                               return state().datasetFetched(evt.ref,evt.size);
@@ -110,10 +111,11 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
                               return dataset;
                           }
                       }
-              ).collect(Collectors.toList())),
+              ).collect(Collectors.toList()))),
               state().lastParsed
             );
         });
         return b.build();
     }
+    
 }

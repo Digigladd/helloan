@@ -14,9 +14,7 @@ import akka.http.javadsl.unmarshalling.Unmarshaller;
 import akka.http.scaladsl.model.headers.HttpEncodings;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
-import com.digigladd.helloan.sync.impl.SyncCommand;
-import com.digigladd.helloan.sync.impl.SyncEntity;
-import com.digigladd.helloan.sync.impl.SyncState;
+import com.digigladd.helloan.sync.impl.*;
 import com.digigladd.helloan.utils.Constants;
 import com.digigladd.helloan.utils.Urls;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
@@ -61,11 +59,7 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private final class Tick {
-		public final boolean init;
-		
-		public Tick(boolean init) {
-			this.init = init;
-		}
+	
 	}
 	
 	private final class GetDatasets {
@@ -102,7 +96,8 @@ public class SyncActor extends AbstractActorWithTimers {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SyncEntity.class);
 		this.ref = persistentEntityRegistry.refFor(SyncEntity.class, Constants.SYNC_ENTITY_ID);
-		getTimers().startSingleTimer("init", new Tick(true), Duration.ofSeconds(20));
+		
+		getTimers().startSingleTimer("init", new Tick(), Duration.ofSeconds(20));
 		this.environment = environment;
 		this.executor = context().dispatcher();
 	}
@@ -110,12 +105,18 @@ public class SyncActor extends AbstractActorWithTimers {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
+				.match(Done.class, this::jobDone)
 				.match(SyncState.class, this::perform)
 				.match(Tick.class, this::tick)
 				.match(GetDatasets.class, this::getDatasets)
 				.match(Datasets.class, this::saveDatasets)
 				.match(FetchDataset.class, this::fetchDataset)
 				.build();
+	}
+	
+	private void jobDone(Done done) {
+		log.info("A job has been done, schedule another in 5 seconds");
+		getTimers().startSingleTimer("init", new Tick(), Duration.ofSeconds(5));
 	}
 	
 	private void perform(SyncState state) {
@@ -128,10 +129,13 @@ public class SyncActor extends AbstractActorWithTimers {
 				self().tell(new GetDatasets(currentYear), self());
 			} else {
 				log.info("Check unfetch datasets!");
-				Optional<SyncState.Dataset> dataset = state.getDatasets().stream().filter(f -> f.size == 0 && !f.fetched).findFirst();
+				Optional<Dataset> dataset = state.getDatasets().stream().filter(f -> f.size == 0 && !f.fetched).findFirst();
 				if (dataset.isPresent()) {
 					log.info("One dataset to fetch: {}", dataset.get().ref);
 					self().tell(new FetchDataset(dataset.get().ref),self());
+				} else {
+					log.info("Schedule a refresh in 12h!");
+					getTimers().startSingleTimer("refresh", new Tick(), Duration.ofHours(12));
 				}
 			}
 		} else {
@@ -149,11 +153,7 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private void tick(Tick tick) {
-		log.info("Received tick {}!", tick.init);
-		if (tick.init) {
-			log.info("Starting periodic timer!");
-			getTimers().startPeriodicTimer("periodic", new Tick(false), Duration.ofHours(6));
-		}
+		log.info("Received tick!", tick);
 		pipe(ref.ask(SyncCommand.get()), executor).to(self());
 	}
 	
