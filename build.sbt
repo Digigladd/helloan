@@ -48,7 +48,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       Cmd("RUN", "mkdir", "/opt/docker/datasets"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-sync-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M", "-Dconfig.resource=production.conf")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-sync-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -100,7 +100,7 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
       Cmd("RUN", "mkdir", "/opt/docker/datasets"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M", "-Dconfig.resource=production.conf")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-publication-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -140,7 +140,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
       Cmd("RUN", "mkdir", "/opt/docker/datasets"),
       Cmd("EXPOSE","9000"),
       Cmd("USER","daemon"),
-      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M","-Dconfig.resource=production.conf")
+      ExecCmd("ENTRYPOINT","/opt/docker/bin/helloan-seance-impl", "-J-Xss256k", "-J-Xms256M", "-J-Xmx512M")
     )
   )
   .settings(lagomForkedTestSettings: _*)
@@ -159,3 +159,4 @@ def common = Seq(
 )
 
 lagomUnmanagedServices in ThisBuild += ("elasticearch" -> "http://elasticsearch:9200")
+lagomCassandraPort in ThisBuild := 9042
