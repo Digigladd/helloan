@@ -17,6 +17,12 @@ wait() {
 	done
 }
 
+force_wait() {
+
+	echo "Waiting 40s..."
+	sleep 40
+}
+
 docker stack rm helloan-publication
 docker stack rm helloan-seance
 docker stack rm helloan-sync
@@ -30,11 +36,11 @@ cd docker/
 echo "deploying helloan seance"
 docker stack deploy -c seance.yml helloan-seance
 
-wait 9001
+force_wait
 
 docker stack deploy -c sync.yml helloan-sync
 
-wait 9002
+force_wait
 
 docker stack deploy -c publication.yml helloan-publication
 
