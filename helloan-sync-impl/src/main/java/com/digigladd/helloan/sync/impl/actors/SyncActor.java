@@ -58,7 +58,7 @@ public class SyncActor extends AbstractActorWithTimers {
 		return Props.create(SyncActor.class);
 	}
 	
-	private final class Tick {
+	public static final class Tick {
 	
 	}
 	
@@ -96,27 +96,21 @@ public class SyncActor extends AbstractActorWithTimers {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SyncEntity.class);
 		this.ref = persistentEntityRegistry.refFor(SyncEntity.class, Constants.SYNC_ENTITY_ID);
-		
-		getTimers().startSingleTimer("init", new Tick(), Duration.ofSeconds(20));
 		this.environment = environment;
 		this.executor = context().dispatcher();
+		//need a initial tick!
+		getTimers().startSingleTimer("time-of-origin", new Tick(), Duration.ofSeconds(30));
 	}
 	
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
-				.match(Done.class, this::jobDone)
 				.match(SyncState.class, this::perform)
 				.match(Tick.class, this::tick)
 				.match(GetDatasets.class, this::getDatasets)
 				.match(Datasets.class, this::saveDatasets)
 				.match(FetchDataset.class, this::fetchDataset)
 				.build();
-	}
-	
-	private void jobDone(Done done) {
-		log.info("A job has been done, schedule another in 5 seconds");
-		getTimers().startSingleTimer("init", new Tick(), Duration.ofSeconds(15));
 	}
 	
 	private void perform(SyncState state) {
@@ -134,7 +128,7 @@ public class SyncActor extends AbstractActorWithTimers {
 					log.info("One dataset to fetch: {}", dataset.get().ref);
 					self().tell(new FetchDataset(dataset.get().ref),self());
 				} else {
-					log.info("Schedule a refresh in 12h!");
+					log.info("No dataset to fetch, schedule a refresh in 12h!");
 					getTimers().startSingleTimer("refresh", new Tick(), Duration.ofHours(12));
 				}
 			}
@@ -153,7 +147,7 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private void tick(Tick tick) {
-		log.info("Received tick!", tick);
+		log.info("Received tick, state has changed!", tick);
 		pipe(ref.ask(SyncCommand.get()), executor).to(self());
 	}
 	

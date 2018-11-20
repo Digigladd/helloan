@@ -1,8 +1,14 @@
 package com.digigladd.helloan.sync.impl;
 
+import akka.Done;
 import akka.NotUsed;
+import akka.actor.ActorRef;
 import akka.japi.Pair;
+import akka.stream.Materializer;
+import akka.stream.javadsl.Flow;
+import akka.util.Timeout;
 import com.digigladd.helloan.sync.api.SyncStatus;
+import com.digigladd.helloan.sync.impl.actors.SyncActor;
 import com.digigladd.helloan.utils.Constants;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
 import com.lightbend.lagom.javadsl.api.broker.Topic;
@@ -13,13 +19,18 @@ import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import com.digigladd.helloan.sync.api.SyncService;
 import com.digigladd.helloan.sync.impl.SyncCommand.*;
+import com.lightbend.lagom.javadsl.pubsub.PubSubRegistry;
+import com.lightbend.lagom.javadsl.pubsub.TopicId;
 import com.lightbend.lagom.javadsl.server.HeaderServiceCall;
 import com.lightbend.lagom.javadsl.server.ServerServiceCall;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -29,11 +40,27 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class SyncServiceImpl implements SyncService {
     private final PersistentEntityRegistry persistentEntityRegistry;
     private final Logger log = LoggerFactory.getLogger(SyncServiceImpl.class);
+    private final ActorRef syncActor;
+    private final PubSubRegistry pubSub;
 
     @Inject
-    public SyncServiceImpl(PersistentEntityRegistry persistentEntityRegistry) {
+    public SyncServiceImpl(PersistentEntityRegistry persistentEntityRegistry,
+                           @Named("syncActor") ActorRef syncActor,
+                           PubSubRegistry pubSub,
+                           Materializer materializer) {
         this.persistentEntityRegistry = persistentEntityRegistry;
         persistentEntityRegistry.register(SyncEntity.class);
+        this.syncActor = syncActor;
+        this.pubSub = pubSub;
+        pubSub.refFor(TopicId.of(SyncEvent.class, Constants.SYNC_EVENTS)).subscriber().runForeach(
+                evt -> {
+                    log.info("Received new sync event {}", evt);
+                    if (evt instanceof SyncEvent.YearAdded || evt instanceof SyncEvent.DatasetFetched) {
+                        syncActor.tell(new SyncActor.Tick(), null);
+                    }
+                },
+                materializer
+        );
     }
 
     @Override
@@ -73,5 +100,12 @@ public class SyncServiceImpl implements SyncService {
             evt = new com.digigladd.helloan.sync.api.SyncEvent.ToIgnore();
         }
         return Pair.create(evt, pair.second());
+    }
+    
+    private Pair<SyncActor.Tick, Offset> consumeEvent(Pair<SyncEvent, Offset> pair) {
+        log.info("Received sync event {}", pair.first());
+        SyncActor.Tick tick = new SyncActor.Tick();
+        this.syncActor.tell(tick, null);
+        return Pair.create(tick, pair.second());
     }
 }

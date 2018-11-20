@@ -1,14 +1,20 @@
 package com.digigladd.helloan.sync.impl;
 
 import akka.Done;
+import com.digigladd.helloan.sync.api.SyncStatus;
 import com.digigladd.helloan.sync.impl.actors.SyncActor;
+import com.digigladd.helloan.utils.Constants;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 
 import com.digigladd.helloan.sync.impl.SyncCommand.*;
+import com.lightbend.lagom.javadsl.pubsub.PubSubRef;
+import com.lightbend.lagom.javadsl.pubsub.PubSubRegistry;
+import com.lightbend.lagom.javadsl.pubsub.TopicId;
 import org.pcollections.TreePVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.swing.text.html.Option;
 import java.security.cert.CollectionCertStoreParameters;
 import java.time.LocalDate;
@@ -21,6 +27,13 @@ import java.util.stream.Stream;
 public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncState> {
     
     private final Logger log = LoggerFactory.getLogger(SyncEntity.class);
+    private final PubSubRef<SyncEvent> publishedEvent;
+    
+    @Inject
+    public SyncEntity(PubSubRegistry pubSub) {
+    	this.publishedEvent = pubSub.refFor(TopicId.of(SyncEvent.class, Constants.SYNC_EVENTS));
+	}
+    
     @Override
     public Behavior initialBehavior(Optional<SyncState> snapshotState) {
         
@@ -68,18 +81,20 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
             if (evt.getYear() == String.valueOf(LocalDateTime.now().getYear())) {
                 lastParsed = evt.getLastParsed();
             }
-            return new SyncState(
-                    Optional.of(state().getParsedYears()),
-                    Optional.of(
-                            TreePVector.from(Stream.concat(
-                                state().getDatasets().stream(),
-                                evt.datasets.stream().map(
-                                    m -> state().createDataset(m)
-                                )
-                            ).collect(Collectors.toList()))
-                    ),
-                    lastParsed
-            );
+            SyncState newState = new SyncState(
+					Optional.of(state().getParsedYears()),
+					Optional.of(
+							TreePVector.from(Stream.concat(
+									state().getDatasets().stream(),
+									evt.datasets.stream().map(
+											m -> state().createDataset(m)
+									)
+							).collect(Collectors.toList()))
+					),
+					lastParsed
+			);
+            this.publishedEvent.publish(evt);
+            return newState;
         });
         
         b.setEventHandler(SyncEvent.YearAdded.class, evt -> {
@@ -89,31 +104,35 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
             if (currentYear.equalsIgnoreCase(evt.getYear())) {
                 lastParsed = Optional.of(evt.lastParsed);
             }
-            return new SyncState(
-                    Optional.of(
-                            state().getParsedYears().plusAll(Stream.of(evt.getYear()).collect(Collectors.toList()))
-                    ),
-                    Optional.of(state().getDatasets()),
-                    lastParsed
-            );
+			SyncState newState = new SyncState(
+					Optional.of(
+							state().getParsedYears().plusAll(Stream.of(evt.getYear()).collect(Collectors.toList()))
+					),
+					Optional.of(state().getDatasets()),
+					lastParsed
+			);
+            this.publishedEvent.publish(evt);
+            return newState;
         });
         
         b.setEventHandler(SyncEvent.DatasetFetched.class, evt -> {
             log.info("Dataset fetched {}: {} bytes", evt.ref, evt.size);
-            return new SyncState(
-              Optional.of(state().getParsedYears()),
-              Optional.of(
-                      TreePVector.from(state().getDatasets().stream().map(
-                      dataset -> {
-                          if (dataset.ref == evt.ref) {
-                              return state().datasetFetched(evt.ref,evt.size);
-                          } else {
-                              return dataset;
-                          }
-                      }
-              ).collect(Collectors.toList()))),
-              state().lastParsed
-            );
+            SyncState newState = new SyncState(
+					Optional.of(state().getParsedYears()),
+					Optional.of(
+							TreePVector.from(state().getDatasets().stream().map(
+									dataset -> {
+										if (dataset.ref == evt.ref) {
+											return state().datasetFetched(evt.ref,evt.size);
+										} else {
+											return dataset;
+										}
+									}
+							).collect(Collectors.toList()))),
+					state().lastParsed
+			);
+            this.publishedEvent.publish(evt);
+            return newState;
         });
         return b.build();
     }

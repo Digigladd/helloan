@@ -28,6 +28,7 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
     libraryDependencies ++= Seq(
       lagomJavadslPersistenceCassandra,
       lagomJavadslKafkaBroker,
+      lagomJavadslPubSub,
       lagomLogback,
       lagomJavadslTestKit,
       persistenceCassandra,
