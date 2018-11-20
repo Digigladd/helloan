@@ -207,7 +207,7 @@ public class SyncActor extends AbstractActorWithTimers {
 				pipe(ref.ask(SyncCommand.fetchDataset(fetch.ref, uploadPath.toFile().length())), executor).to(self());
 			}
 		} catch (Exception e) {
-			log.info("Error while downloading {}", fetch.ref);
+			log.error("Error while downloading {}: {}", fetch.ref, e);
 		}
 	}
 	
