@@ -116,7 +116,7 @@ public class SyncActor extends AbstractActorWithTimers {
 	
 	private void jobDone(Done done) {
 		log.info("A job has been done, schedule another in 5 seconds");
-		getTimers().startSingleTimer("init", new Tick(), Duration.ofSeconds(5));
+		getTimers().startSingleTimer("init", new Tick(), Duration.ofSeconds(15));
 	}
 	
 	private void perform(SyncState state) {
