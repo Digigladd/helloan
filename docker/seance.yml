@@ -15,7 +15,7 @@ services:
     networks:
       - default
     ports:
-      - "127.0.0.1:9001:9000"
+      - "9000"
 
 networks:
   default:
