@@ -10,6 +10,8 @@ services:
       - CAS_NATIVE=tcp://${CAS}:9042
       - KAFKA_NATIVE=tcp://${KAFKA}:9092
       - CAS=${CAS}
+    volumes:
+      - ../datasets:/opt/docker/datasets
     networks:
       - default
     ports:
