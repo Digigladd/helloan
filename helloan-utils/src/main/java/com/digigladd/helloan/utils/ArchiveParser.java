@@ -72,18 +72,28 @@ public class ArchiveParser {
 	
 	private static Metadonnees parsePublication(InputStream is) {
 		final XMLInputFactory factory = XMLInputFactory.newInstance();
-		
+		boolean inCompteRendu = false;
 		try {
 			if (is != null) {
 				final XMLEventReader reader = factory.createXMLEventReader(is);
 				Metadonnees metadonnees = null;
 				while (reader.hasNext()) {
 					final XMLEvent event = reader.nextEvent();
-					if (event.isStartElement() && event.asStartElement().getName().getLocalPart().equals(Constants.ELEMENT_METADONNEES)) {
-						metadonnees = parseMetadonnees(reader);
-					}
-					if (event.isStartElement() && event.asStartElement().getName().getLocalPart().equals(Constants.ELEMENT_COMPTERENDU)) {
-						metadonnees.setNrSeance(metadonnees.getNrSeance()+1);
+					if (event.isStartElement()) {
+						final StartElement element = event.asStartElement();
+						final String elementName = element.getName().getLocalPart();
+						switch (elementName.toLowerCase()) {
+							case Constants.ELEMENT_METADONNEES:
+								if (!inCompteRendu) {
+									metadonnees = parseMetadonnees(reader);
+								}
+								break;
+							case Constants.ELEMENT_COMPTERENDU:
+								inCompteRendu = true;
+								metadonnees.setNrSeance(metadonnees.getNrSeance()+1);
+								break;
+								
+						}
 					}
 				}
 				reader.close();
@@ -108,7 +118,7 @@ public class ArchiveParser {
 				final StartElement element = event.asStartElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				switch (elementName) {
+				switch (elementName.toLowerCase()) {
 					case Constants.ELEMENT_NUMSEANCE:
 						metadonnees.setNumSeance(Integer.parseInt(reader.getElementText()));
 						break;
@@ -232,7 +242,7 @@ public class ArchiveParser {
 				final StartElement element = event.asStartElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				switch (elementName) {
+				switch (elementName.toLowerCase()) {
 					case Constants.ELEMENT_PRESIDENTSEANCE:
 						if (inSommaire) {
 							compteRendu.setPresidentSeance(reader.getElementText());
@@ -276,7 +286,7 @@ public class ArchiveParser {
 			if (event.isEndElement()) {
 				final EndElement element = event.asEndElement();
 				final String elementName = element.getName().getLocalPart();
-				switch (elementName){
+				switch (elementName.toLowerCase()){
 					case Constants.ELEMENT_SOMMAIRE:
 						inSommaire = false;
 						break;
@@ -309,7 +319,7 @@ public class ArchiveParser {
 				final StartElement element = event.asStartElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				switch (elementName) {
+				switch (elementName.toLowerCase()) {
 					case Constants.ELEMENT_ORATEUR:
 						inOrateur = true;
 						break;
@@ -325,7 +335,7 @@ public class ArchiveParser {
 				final EndElement element = event.asEndElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				switch (elementName) {
+				switch (elementName.toLowerCase()) {
 					case Constants.ELEMENT_ORATEUR:
 						inOrateur = false;
 						break;
@@ -404,7 +414,7 @@ public class ArchiveParser {
 				final StartElement element = event.asStartElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				switch(elementName) {
+				switch(elementName.toLowerCase()) {
 					case Constants.ELEMENT_NOMBREVOTANT:
 						vote.addValeur(parseLibelleValeur(reader));
 						break;
@@ -443,7 +453,7 @@ public class ArchiveParser {
 				final StartElement element = event.asStartElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				switch(elementName) {
+				switch(elementName.toLowerCase()) {
 					case Constants.ELEMENT_LIBELLE:
 						valeur.setLibelle(reader.getElementText());
 						break;
