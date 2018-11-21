@@ -10,6 +10,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
 		@JsonSubTypes.Type(value = SyncEvent.DatasetFetched.class, name = "dataset-fetched"),
@@ -17,22 +20,25 @@ import lombok.Value;
 })
 public interface SyncEvent {
 	
+	Optional<String> getRef();
+	
 	@Value
 	final class DatasetFetched implements SyncEvent {
-		public final String ref;
+		public final Optional<String> ref;
 		
 		@JsonCreator
 		public DatasetFetched(String ref) {
-			this.ref = Preconditions.checkNotNull(ref, "ref");
+			this.ref = Optional.of(ref);
 		}
 	}
 	
 	@Value
 	final class ToIgnore implements SyncEvent {
+		public final Optional<String> ref;
 		
 		@JsonCreator
 		public ToIgnore() {
-		
+			this.ref = Optional.empty();
 		}
 	}
 }

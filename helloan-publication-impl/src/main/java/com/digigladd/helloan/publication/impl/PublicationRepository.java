@@ -67,7 +67,8 @@ public class PublicationRepository {
 				LocalDate.ofEpochDay(publication.getDate("periodeDu").getDaysSinceEpoch()),
 				LocalDate.ofEpochDay(publication.getDate("periodeAu").getDaysSinceEpoch()),
 				publication.getString("typeSession"),
-				publication.getInt("numSeance")
+				publication.getInt("numSeance"),
+				publication.getString("ref")
 		);
 	}
 	
@@ -112,7 +113,8 @@ public class PublicationRepository {
 										"numSeance int,"+
 										"periodeDu date,"+
 										"periodeAu date,"+
-										"typeSession varchar"+
+										"typeSession varchar,"+
+										"ref varchar"+
 										")"
 						)
 					);
@@ -143,8 +145,10 @@ public class PublicationRepository {
 					"numSeance,"+
 					"periodeDu,"+
 					"periodeAu,"+
-					"typeSession"+
+					"typeSession,"+
+					"ref"+
 					") VALUES ("+
+					"?, "+
 					"?, "+
 					"?, "+
 					"?, "+
@@ -173,7 +177,8 @@ public class PublicationRepository {
 							publication.numSeance,
 							publication.periodeDu,
 							publication.periodeAu,
-							publication.typeSession
+							publication.typeSession,
+							publication.ref
 					)
 			);
 		}

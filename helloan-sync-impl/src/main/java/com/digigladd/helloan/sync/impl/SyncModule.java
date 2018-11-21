@@ -34,5 +34,6 @@ public class SyncModule extends AbstractModule implements ServiceGuiceSupport, A
         
         bindService(SyncService.class, SyncServiceImpl.class);
         bindActor(SyncActor.class, "syncActor");
+        bind(SyncEventHandler.class).asEagerSingleton();
     }
 }

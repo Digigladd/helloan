@@ -7,9 +7,9 @@ import com.lightbend.lagom.javadsl.persistence.AggregateEvent;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTag;
 import com.lightbend.lagom.serialization.CompressedJsonable;
 import lombok.Value;
+import org.pcollections.PSet;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,29 +32,13 @@ public interface SyncEvent extends CompressedJsonable, AggregateEvent<SyncEvent>
     @Value
     @JsonDeserialize
     final class DatasetsAdded implements SyncEvent {
-        public final List<String> datasets;
-        public final String year;
+        public final PSet<String> datasets;
         public final Optional<LocalDateTime> lastParsed;
         
         @JsonCreator
-        DatasetsAdded(List<String> datasets, String year, Optional<LocalDateTime> lastParsed) {
+        public DatasetsAdded(PSet<String> datasets, Optional<LocalDateTime> lastParsed) {
             this.datasets = Preconditions.checkNotNull(datasets, "datasets");
-            this.year = year;
             this.lastParsed = lastParsed;
-        }
-    }
-    
-    @SuppressWarnings("serial")
-    @Value
-    @JsonDeserialize
-    final class YearAdded implements SyncEvent {
-        public final String year;
-        public final LocalDateTime lastParsed;
-        
-        @JsonCreator
-        YearAdded(String year) {
-            this.year = Preconditions.checkNotNull(year, "year");
-            this.lastParsed = LocalDateTime.now();
         }
     }
     

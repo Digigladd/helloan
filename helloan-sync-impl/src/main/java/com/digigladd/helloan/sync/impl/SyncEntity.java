@@ -10,6 +10,7 @@ import com.digigladd.helloan.sync.impl.SyncCommand.*;
 import com.lightbend.lagom.javadsl.pubsub.PubSubRef;
 import com.lightbend.lagom.javadsl.pubsub.PubSubRegistry;
 import com.lightbend.lagom.javadsl.pubsub.TopicId;
+import org.pcollections.HashTreePSet;
 import org.pcollections.TreePVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,49 +20,35 @@ import javax.swing.text.html.Option;
 import java.security.cert.CollectionCertStoreParameters;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncState> {
     
     private final Logger log = LoggerFactory.getLogger(SyncEntity.class);
-    private final PubSubRef<SyncEvent> publishedEvent;
-    
-    @Inject
-    public SyncEntity(PubSubRegistry pubSub) {
-    	this.publishedEvent = pubSub.refFor(TopicId.of(SyncEvent.class, Constants.SYNC_EVENTS));
-	}
     
     @Override
     public Behavior initialBehavior(Optional<SyncState> snapshotState) {
         
         BehaviorBuilder b = newBehaviorBuilder(
-            snapshotState.orElse(new SyncState(Optional.empty(), Optional.empty(), Optional.empty()))
+            snapshotState.orElse(SyncState.EMPTY)
         );
         
         b.setCommandHandler(AddDatasets.class, (cmd, ctx) -> {
-                    List<String> newRef = cmd.getRefs().stream().filter(ref -> state().addDataset(ref)).collect(Collectors.toList());
-                    log.info("Sync need to add {} datasets",newRef.size());
-                    if (newRef.size() > 0) {
-                        final SyncEvent.DatasetsAdded datasetsAdded = new SyncEvent.DatasetsAdded(newRef, cmd.getYear(), Optional.of(LocalDateTime.now()));
+        			Set<String> toAdd = new HashSet<>(cmd.getRefs());
+        			toAdd.removeAll(state().getDatasets());
+        			if (toAdd.size() > 0) {
+                        final SyncEvent.DatasetsAdded datasetsAdded = new SyncEvent.DatasetsAdded(HashTreePSet.from(toAdd), Optional.of(LocalDateTime.now()));
                         return ctx.thenPersist(datasetsAdded, evt -> ctx.reply(Done.getInstance()));
                     } else {
                         return ctx.done();
                     }
                 }
         );
-        
-        b.setCommandHandler(AddYear.class, (cmd, ctx) -> {
-            if (state().addYear(cmd.getYear())) {
-                log.info("Sync need to add {}", cmd.getYear());
-                final SyncEvent.YearAdded yearAdded = new SyncEvent.YearAdded(cmd.getYear());
-                return ctx.thenPersist(yearAdded, evt -> ctx.reply(Done.getInstance()));
-            } else {
-                return ctx.done();
-            }
-        });
         
         b.setCommandHandler(FetchDataset.class, (cmd, ctx) -> {
             final SyncEvent.DatasetFetched datasetFetched = new SyncEvent.DatasetFetched(cmd.getRef(),cmd.getSize());
@@ -76,54 +63,28 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         );
         
         b.setEventHandler(SyncEvent.DatasetsAdded.class, evt -> {
-            log.info("Datasets added {}", evt.datasets.size());
             Optional<LocalDateTime> lastParsed = state().getLastParsed();
-            if (evt.getYear() == String.valueOf(LocalDateTime.now().getYear())) {
-                lastParsed = evt.getLastParsed();
-            }
             SyncState newState = new SyncState(
-					Optional.of(state().getParsedYears()),
 					Optional.of(
 							TreePVector.from(Stream.concat(
 									state().getDatasets().stream(),
 									evt.datasets.stream().map(
-											m -> state().createDataset(m)
+											m -> new Dataset(m, Optional.empty(), Optional.empty())
 									)
 							).collect(Collectors.toList()))
 					),
 					lastParsed
 			);
-            this.publishedEvent.publish(evt);
-            return newState;
-        });
-        
-        b.setEventHandler(SyncEvent.YearAdded.class, evt -> {
-            log.info("Year added {}", evt.getYear());
-            String currentYear = String.valueOf(LocalDate.now().getYear());
-            Optional<LocalDateTime> lastParsed = Optional.empty();
-            if (currentYear.equalsIgnoreCase(evt.getYear())) {
-                lastParsed = Optional.of(evt.lastParsed);
-            }
-			SyncState newState = new SyncState(
-					Optional.of(
-							state().getParsedYears().plusAll(Stream.of(evt.getYear()).collect(Collectors.toList()))
-					),
-					Optional.of(state().getDatasets()),
-					lastParsed
-			);
-            this.publishedEvent.publish(evt);
             return newState;
         });
         
         b.setEventHandler(SyncEvent.DatasetFetched.class, evt -> {
-            log.info("Dataset fetched {}: {} bytes", evt.ref, evt.size);
             SyncState newState = new SyncState(
-					Optional.of(state().getParsedYears()),
 					Optional.of(
 							TreePVector.from(state().getDatasets().stream().map(
 									dataset -> {
 										if (dataset.ref == evt.ref) {
-											return state().datasetFetched(evt.ref,evt.size);
+											return new Dataset(evt.getRef(), Optional.of(evt.getSize()), Optional.of(true));
 										} else {
 											return dataset;
 										}
@@ -131,7 +92,6 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
 							).collect(Collectors.toList()))),
 					state().lastParsed
 			);
-            this.publishedEvent.publish(evt);
             return newState;
         });
         return b.build();

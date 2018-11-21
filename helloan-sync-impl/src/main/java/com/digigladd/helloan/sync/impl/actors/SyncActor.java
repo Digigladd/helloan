@@ -27,15 +27,17 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import akka.http.javadsl.coding.Coder;
+import org.pcollections.HashTreePSet;
+import org.pcollections.PSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,32 +64,9 @@ public class SyncActor extends AbstractActorWithTimers {
 	
 	}
 	
-	private final class GetDatasets {
-		public final String year;
-		
-		public GetDatasets(String year) {
-			this.year = year;
-		}
-	}
+	public static final class Fetch {
 	
-	private final class Datasets {
-		public final String year;
-		public final List<String> datasets;
-		
-		public Datasets(String year, List<String> datasets) {
-			this.year = year;
-			this.datasets = datasets;
-		}
 	}
-	
-	private final class FetchDataset {
-		public final String ref;
-		
-		public FetchDataset(String ref) {
-			this.ref = ref;
-		}
-	}
-	
 	
 	
 	@Inject
@@ -105,64 +84,56 @@ public class SyncActor extends AbstractActorWithTimers {
 	@Override
 	public Receive createReceive() {
 		return receiveBuilder()
-				.match(SyncState.class, this::perform)
 				.match(Tick.class, this::tick)
-				.match(GetDatasets.class, this::getDatasets)
-				.match(Datasets.class, this::saveDatasets)
-				.match(FetchDataset.class, this::fetchDataset)
+				.match(Fetch.class, this::fetch)
 				.build();
 	}
 	
-	private void perform(SyncState state) {
-		log.info("Received SyncState!");
-		String currentYear = getCurrentYear();
-		LocalDateTime now = getNow();
-		if (state.getLastParsed().isPresent()) {
-			if (now.isAfter(state.getLastParsed().get().plusHours(1))) {
-				log.info("Need a refresh!");
-				self().tell(new GetDatasets(currentYear), self());
-			} else {
-				log.info("Check unfetch datasets!");
-				Optional<Dataset> dataset = state.getDatasets().stream().filter(f -> f.size == 0 && !f.fetched).findFirst();
-				if (dataset.isPresent()) {
-					log.info("One dataset to fetch: {}", dataset.get().ref);
-					self().tell(new FetchDataset(dataset.get().ref),self());
-				} else {
-					log.info("No dataset to fetch, schedule a refresh in 12h!");
-					getTimers().startSingleTimer("refresh", new Tick(), Duration.ofHours(12));
+	private void fetch(Fetch fetch) {
+		log.info("Received Fetch!");
+		ref.ask(new SyncCommand.Get()).thenApply(
+				state -> {
+					Optional<Dataset> dataset = state.getDatasets().stream().filter(f -> !f.fetched).findFirst();
+					if (dataset.isPresent()) {
+						return this.fetchDataset(dataset.get().getRef());
+					} else {
+						log.info("No more dataset to fetch, schedule a tick in 12 hours");
+						getTimers().startSingleTimer("time-of-redemption", new Tick(), Duration.ofHours(12));
+						return CompletableFuture.completedFuture(Done.getInstance());
+					}
 				}
-			}
-		} else {
-			if (state.getParsedYears().isEmpty()) {
-				currentYear = Constants.START_YEAR;
-			} else {
-				Optional<String> maxParsedYear = state.getParsedYears().stream().max(Comparator.comparing(Integer::parseInt));
-				if (maxParsedYear.isPresent() && !maxParsedYear.get().equalsIgnoreCase(currentYear)) {
-					currentYear = String.valueOf(Integer.parseInt(maxParsedYear.get()) + 1);
-				}
-			}
-			log.info("Need to get datasets for {}", currentYear);
-			self().tell(new GetDatasets(currentYear), self());
-		}
+		);
 	}
 	
 	private void tick(Tick tick) {
-		log.info("Received tick, state has changed!", tick);
-		pipe(ref.ask(SyncCommand.get()), executor).to(self());
+		//a tick triggers a full parsing of the external repo to get the list of all datasets available.
+		log.info("Received tick!");
+		CompletionStage<PSet<String>> datasets = CompletableFuture.completedFuture(HashTreePSet.empty());
+		for (CompletionStage<Set<String>> stage : Stream.iterate(Integer.parseInt(Constants.START_YEAR), n -> n +1)
+				.limit(Integer.parseInt(getCurrentYear())-Integer.parseInt(Constants.START_YEAR)+1)
+				.map(this::getDatasets)
+				.collect(Collectors.toList())) {
+			datasets = datasets.thenCombine(
+					stage, (d1,d2) -> d1.plusAll(d2)
+			);
+		}
+		datasets.thenApply(
+				set -> pipe(ref.ask(new SyncCommand.AddDatasets(set)), executor).to(self())
+		);
 	}
 	
-	private void getDatasets(GetDatasets get) {
-		String url = Urls.getYear(get.year);
-		log.info("Received GetDatasets!");
+	private CompletionStage<Set<String>> getDatasets(final Integer year) {
+		String url = Urls.getYear(String.valueOf(year));
+		log.info("Parsing {}", year);
 		CompletableFuture<HttpResponse> getResponse = http.singleRequest(HttpRequest.create(url)).toCompletableFuture();
 		CompletableFuture<HttpResponse> getDecodedResponse = getResponse.thenApply(decodeResponse);
 		CompletableFuture<String> getBody = getDecodedResponse.thenCompose(
 				decoded -> Unmarshaller.entityToString().unmarshal(decoded.entity(), materializer)
 		);
-		pipe(getBody.thenApply(
+		return getBody.thenApply(
 				body -> {
 					Matcher matcher = Constants.linkPattern.matcher(body);
-					List<String> datasets = new ArrayList<>();
+					Set<String> datasets = new HashSet<>();
 					while (matcher.find()) {
 						try {
 							String href = java.net.URLDecoder.decode(matcher.group(1).replaceAll("\"","").replaceAll("'",""), "UTF-8");
@@ -175,33 +146,23 @@ public class SyncActor extends AbstractActorWithTimers {
 							log.info("Error while decoding url {}: {}",matcher.group(1),e);
 						}
 					}
-					return new Datasets(get.year, datasets);
+					return datasets;
 				}
-		), executor).to(self());
+		);
 	}
 	
-	private void saveDatasets(Datasets datasets) {
-		log.info("Received Datasets {}, {}",datasets.year, datasets.datasets.size());
-		CompletableFuture<Done> addDatasets = ref.ask(SyncCommand.addDatasets(datasets.datasets, datasets.year)).toCompletableFuture();
-		pipe(addDatasets.thenCompose( done -> ref.ask(SyncCommand.addYear(datasets.year))), executor).to(self());
-	}
-	
-	private void fetchDataset(FetchDataset fetch) {
-		log.info("Received FetchDataset!");
-		String url = Urls.getDataset(fetch.ref);
-		Path uploadPath = Constants.getDatasetPath(fetch.ref);
+	private CompletionStage<Done> fetchDataset(String fetch) {
+		log.info("Fetch dataset {}!", fetch);
+		String url = Urls.getDataset(fetch);
+		Path uploadPath = Constants.getDatasetPath(fetch);
 		
 		try {
 			FileUtils.copyURLToFile(new URL(url), uploadPath.toFile());
 			log.info("Dataset uploaded, size {}",uploadPath.toFile().length());
-			if (environment.isDev()) {
-				log.info("Development mode, do not pipe!");
-				ref.ask(SyncCommand.fetchDataset(fetch.ref, uploadPath.toFile().length()));
-			} else {
-				pipe(ref.ask(SyncCommand.fetchDataset(fetch.ref, uploadPath.toFile().length())), executor).to(self());
-			}
+			return ref.ask(new SyncCommand.FetchDataset(fetch, uploadPath.toFile().length()));
 		} catch (Exception e) {
-			log.error("Error while downloading {}: {}", fetch.ref, e);
+			log.error("Error while downloading {}: {}", fetch, e);
+			return CompletableFuture.completedFuture(Done.getInstance());
 		}
 	}
 	

@@ -33,15 +33,15 @@ sbt clean docker:clean
 sbt docker:publishLocal
 
 cd docker/
-echo "deploying helloan seance"
-docker stack deploy -c seance.yml helloan-seance
-
-force_wait
-
+echo "deploying helloan sync"
 docker stack deploy -c sync.yml helloan-sync
 
 force_wait
-
+echo "deploying helloan publication"
 docker stack deploy -c publication.yml helloan-publication
+
+force_wait
+echo "deploying helloan seance"
+docker stack deploy -c seance.yml helloan-seance
 
 

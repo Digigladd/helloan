@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 import com.lightbend.lagom.serialization.CompressedJsonable;
 import lombok.Value;
+import org.pcollections.PSet;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * This interface defines all the commands that the SyncEntity supports.
@@ -31,7 +33,7 @@ public interface SyncCommand extends CompressedJsonable {
     final class Get implements SyncCommand, PersistentEntity.ReplyType<SyncState> {
         
         @JsonCreator
-        Get() {
+        public Get() {
         
         }
     }
@@ -52,13 +54,11 @@ public interface SyncCommand extends CompressedJsonable {
     @Value
     @JsonDeserialize
     final class AddDatasets implements SyncCommand, PersistentEntity.ReplyType<Done> {
-        private final List<String> refs;
-        private final String year;
+        private final PSet<String> refs;
         
         @JsonCreator
-        AddDatasets(List<String> refs, String year) {
+        public AddDatasets(PSet<String> refs) {
             this.refs = Objects.requireNonNull(refs, "refs");
-            this.year = year;
         }
     }
     
@@ -70,7 +70,7 @@ public interface SyncCommand extends CompressedJsonable {
         private final Long size;
         
         @JsonCreator
-        FetchDataset(String ref, Long size) {
+        public FetchDataset(String ref, Long size) {
             this.ref = Objects.requireNonNull(ref, "ref");
             this.size = Objects.requireNonNull(size, "size");
         }
@@ -82,13 +82,5 @@ public interface SyncCommand extends CompressedJsonable {
     
     static AddYear addYear(String year) {
         return new AddYear(year);
-    }
-    
-    static AddDatasets addDatasets(List<String> refs, String year) {
-        return new AddDatasets(refs, year);
-    }
-    
-    static FetchDataset fetchDataset(String ref, Long size) {
-        return new FetchDataset(ref, size);
     }
 }

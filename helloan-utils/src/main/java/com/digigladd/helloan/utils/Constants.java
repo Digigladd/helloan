@@ -12,6 +12,8 @@ public class Constants {
 	//SYNC SERVICE CONSTANTS
 	public static final String SYNC_ENTITY_ID = "debats";
 	public static final String SYNC_EVENTS = "sync-events";
+	//PUBLICATION SERVICE CONSTANTS
+	public static final String PUBLICATION_EVENTS = "publication-events";
 	
 	//DATA JO CONSTANTS
 	public static final String START_YEAR = "2011";

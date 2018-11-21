@@ -20,4 +20,5 @@ public class Metadonnees {
 	private String typeSession = "";
 	private int nrSeance = 0;
 	private int numSeance = 0;
+	private String ref = "";
 }

@@ -19,7 +19,7 @@
 
             <!-- keep 30 days' worth of history capped at 3GB total size -->
             <maxHistory>30</maxHistory>
-            <totalSizeCap>3GB</totalSizeCap>
+            <totalSizeCap>1GB</totalSizeCap>
 
         </rollingPolicy>
         <encoder>
@@ -36,7 +36,7 @@
     </appender>
 
     <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
     </appender>
 
     <!-- Set logging for all Play library classes to INFO -->

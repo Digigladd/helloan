@@ -17,10 +17,6 @@ import java.util.Optional;
 
 public interface PublicationCommand extends CompressedJsonable {
 	
-	static AddPublication createAddPublication(Publication publication) {
-		return new AddPublication(publication);
-	}
-	
 	@SuppressWarnings("serial")
 	@Value
 	@JsonDeserialize
@@ -28,7 +24,7 @@ public interface PublicationCommand extends CompressedJsonable {
 		public final Publication publication;
 		
 		@JsonCreator
-		AddPublication(Publication publication) {
+		public AddPublication(Publication publication) {
 			this.publication = publication;
 		}
 	}
@@ -39,7 +35,7 @@ public interface PublicationCommand extends CompressedJsonable {
 	final class Get implements PublicationCommand, PersistentEntity.ReplyType<Optional<Publication>> {
 		
 		@JsonCreator
-		Get() {
+		public Get() {
 		
 		}
 	}

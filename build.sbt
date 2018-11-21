@@ -72,9 +72,11 @@ lazy val `helloan-publication-api` = (project in file("helloan-publication-api")
   .settings(
     libraryDependencies ++= Seq(
       lagomJavadslApi,
+      lagomJavadslJackson,
       lombok
     )
   )
+  .dependsOn(`helloan-utils`)
 
 lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl"))
   .enablePlugins(LagomJava, SbtReactiveAppPlugin)
@@ -105,7 +107,7 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
     )
   )
   .settings(lagomForkedTestSettings: _*)
-  .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-seance-api`,`helloan-utils`)
+  .dependsOn(`helloan-publication-api`,`helloan-sync-api`,`helloan-utils`)
 
 lazy val `helloan-seance-api` = (project in file("helloan-seance-api"))
   .settings(common: _*)
@@ -145,7 +147,7 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
     )
   )
   .settings(lagomForkedTestSettings: _*)
-  .dependsOn(`helloan-seance-api`,`helloan-utils`)
+  .dependsOn(`helloan-seance-api`,`helloan-publication-api`,`helloan-utils`)
 
 val lombok = "org.projectlombok" % "lombok" % "1.16.18"
 val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.1.5"

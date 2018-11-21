@@ -16,7 +16,6 @@ import static com.lightbend.lagom.javadsl.api.Service.pathCall;
 import static com.lightbend.lagom.javadsl.api.Service.named;
 
 public interface SeanceService extends Service {
-	ServiceCall<PullSeance, Done> pull();
 	ServiceCall<NotUsed, Optional<Seance>> get(String id, String session);
 	ServiceCall<NotUsed, NotUsed> status();
 	
@@ -24,9 +23,8 @@ public interface SeanceService extends Service {
 	default Descriptor descriptor() {
 		return named("seance")
 				.withCalls(
-						pathCall("/api/seance/pull", this::pull),
 						pathCall("/api/seance/:id/:session", this::get),
-						pathCall("/status", this::status)
+						pathCall("/api/seance/status", this::status)
 				)
 				.withAutoAcl(true);
 	}

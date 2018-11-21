@@ -5,7 +5,6 @@
 package com.digigladd.helloan.publication.impl;
 
 import com.digigladd.helloan.publication.api.PublicationService;
-import com.digigladd.helloan.seance.api.SeanceService;
 import com.digigladd.helloan.sync.api.SyncService;
 import com.google.inject.AbstractModule;
 import com.lightbend.lagom.javadsl.api.ServiceLocator;
@@ -35,7 +34,5 @@ public class PublicationModule extends AbstractModule implements ServiceGuiceSup
 		
 		bindService(PublicationService.class, PublicationServiceImpl.class);
 		bindClient(SyncService.class);
-		bindClient(SeanceService.class);
-		
 	}
 }

@@ -22,7 +22,7 @@ public interface SeanceCommand extends CompressedJsonable {
 		public final Seance seance;
 		
 		@JsonCreator
-		AddSeance(Seance seance) {
+		public AddSeance(Seance seance) {
 			this.seance = seance;
 		}
 	}
@@ -32,7 +32,7 @@ public interface SeanceCommand extends CompressedJsonable {
 	@JsonDeserialize
 	final class Get implements SeanceCommand, PersistentEntity.ReplyType<Optional<Seance>> {
 		@JsonCreator
-		Get() {
+		public Get() {
 		
 		}
 	}

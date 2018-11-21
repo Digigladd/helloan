@@ -31,7 +31,7 @@ public interface SyncService extends Service {
         return named("sync")
                 .withCalls(
                         pathCall("/api/sync/hello", this::hello),
-                        pathCall("/status", this::status)
+                        pathCall("/api/sync/status", this::status)
                 )
                 .withTopics(
                         topic(Constants.SYNC_EVENTS, this::syncEvents)

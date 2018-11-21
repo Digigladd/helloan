@@ -21,6 +21,7 @@ public class Publication implements CompressedJsonable {
 	final LocalDate periodeAu;
 	final String typeSession;
 	final Integer numSeance;
+	final String ref;
 	
 	@JsonCreator
 	public Publication(LocalDate dateParution,
@@ -31,7 +32,8 @@ public class Publication implements CompressedJsonable {
 					   LocalDate periodeDu,
 					   LocalDate periodeAu,
 					   String typeSession,
-					   Integer numSeance) {
+					   Integer numSeance,
+					   String ref) {
 		this.dateParution = dateParution;
 		this.numParution = numParution;
 		this.numeroGrebiche = numeroGrebiche;
@@ -41,5 +43,6 @@ public class Publication implements CompressedJsonable {
 		this.periodeAu = periodeAu;
 		this.typeSession = typeSession;
 		this.numSeance = numSeance;
+		this.ref = ref;
 	}
 }

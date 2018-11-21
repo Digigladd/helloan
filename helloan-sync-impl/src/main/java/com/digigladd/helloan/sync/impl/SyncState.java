@@ -19,44 +19,24 @@ import java.util.stream.Collectors;
 @Value
 @JsonDeserialize
 public final class SyncState implements CompressedJsonable {
-    public final PSequence<String> parsedYears;
     public final PSequence<Dataset> datasets;
     public final Optional<LocalDateTime> lastParsed;
     
-    public static final SyncState EMPTY = new SyncState(Optional.empty(), Optional.empty(), Optional.empty());
+    public static final SyncState EMPTY = new SyncState(Optional.empty(), Optional.empty());
 
     @JsonCreator
-    public SyncState(Optional<PSequence<String>> parsedYears, Optional<PSequence<Dataset>> datasets, Optional<LocalDateTime> lastParsed) {
-        this.parsedYears = parsedYears.orElse(TreePVector.empty());
+    public SyncState(Optional<PSequence<Dataset>> datasets, Optional<LocalDateTime> lastParsed) {
         this.datasets = datasets.orElse(TreePVector.empty());
         this.lastParsed = lastParsed;
     }
     
     public SyncStatus toSyncStatus() {
         return new SyncStatus(
-            Optional.of(this.parsedYears),
             Optional.of(this.datasets.stream().map(
                   dataset -> dataset.toSyncStatusDataset()
             ).collect(Collectors.toList())),
             this.lastParsed
         );
     }
-    
-    public boolean addDataset(String ref) {
-        return this.getDatasets().stream().filter(f -> f.ref == ref).count() == 0;
-    }
-    
-    public boolean addYear(String year) {
-        return this.getParsedYears().stream().filter(f -> f == year).count() == 0;
-    }
-    
-    public Dataset createDataset(String ref) {
-        return new Dataset(ref, Optional.empty(),Optional.empty());
-    }
-    
-    public Dataset datasetFetched(String ref, Long size) {
-        return new Dataset(ref, Optional.of(size), Optional.of(true));
-    }
-    
     
 }

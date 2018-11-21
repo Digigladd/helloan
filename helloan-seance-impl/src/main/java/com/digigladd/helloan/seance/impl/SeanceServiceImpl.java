@@ -9,6 +9,9 @@ import akka.NotUsed;
 import akka.actor.ActorSystem;
 import akka.japi.Pair;
 import akka.management.AkkaManagement;
+import akka.stream.javadsl.Flow;
+import com.digigladd.helloan.publication.api.PublicationEvent;
+import com.digigladd.helloan.publication.api.PublicationService;
 import com.digigladd.helloan.seance.api.Evenement;
 import com.digigladd.helloan.seance.api.PullSeance;
 import com.digigladd.helloan.seance.api.SeanceService;
@@ -27,9 +30,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class SeanceServiceImpl implements SeanceService {
@@ -40,31 +48,12 @@ public class SeanceServiceImpl implements SeanceService {
 	
 	@Inject
 	public SeanceServiceImpl(PersistentEntityRegistry persistentEntityRegistry,
-							 ActorSystem system) {
+							 PublicationService publicationService) {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
-		
-	}
-	
-	@Override
-	public ServiceCall<PullSeance, Done> pull() {
-		return request ->
-		{
-			CompteRendu compteRendu = ArchiveParser.getCompteRendu(request.publication, request.session);
-			String id = request.numeroGrebiche + "#" + request.session;
-			Seance seance = new Seance(
-					compteRendu.getPresidentSeance(),
-					compteRendu.getQualitePresident(),
-					TreePVector.from(compteRendu.getEvenements()
-							.stream()
-							.map(
-									this::convert
-							)
-							.collect(Collectors.toList()))
-			
-			);
-			return entityRef(id).ask(new SeanceCommand.AddSeance(seance));
-		};
+		publicationService.pubEvents().subscribe().atLeastOnce(
+				Flow.<PublicationEvent>create().mapAsync(2, this::toSeances)
+		);
 	}
 	
 	@Override
@@ -258,5 +247,38 @@ public class SeanceServiceImpl implements SeanceService {
 		return new Evenement.ResultatVote(
 				valeurs
 		);
+	}
+	
+	private CompletionStage<Done> toSeances(PublicationEvent event) {
+		if (event instanceof PublicationEvent.PublicationAdded) {
+			final PublicationEvent.PublicationAdded publication = (PublicationEvent.PublicationAdded)event;
+			
+			return doAll(
+					Stream.iterate(1, n -> n+1).limit(publication.sessions).map(
+						session -> {
+							CompteRendu compteRendu = ArchiveParser.getCompteRendu(publication.getRef().get(), session);
+							if (compteRendu != null) {
+								String id = publication.numeroGrebiche + "#" + String.valueOf(session);
+								final Seance seance = new Seance(
+										compteRendu.getPresidentSeance(),
+										compteRendu.getQualitePresident(),
+										TreePVector.from(compteRendu.getEvenements()
+												.stream()
+												.map(
+														this::convert
+												)
+												.collect(Collectors.toList()))
+								
+								);
+								return entityRef(id).ask(new SeanceCommand.AddSeance(seance));
+							} else {
+								log.error("Failed to extract compte rendu from archive {}", publication.ref);
+								return CompletableFuture.completedFuture(Done.getInstance());
+							}
+						}
+					).collect(Collectors.toList()));
+			
+		}
+		return CompletableFuture.completedFuture(Done.getInstance());
 	}
 }

@@ -16,15 +16,13 @@ import java.util.Optional;
 @SuppressWarnings("serial")
 @Immutable
 public final class SyncStatus implements Jsonable {
-	public final List<String> parsedYears;
 	public final List<SyncDataset> datasets;
 	public final Optional<LocalDateTime> lastParsed;
 	public final Integer nrDataset;
 	public final Long totalSize;
 	
 	@JsonCreator
-	public SyncStatus(Optional<List<String>> parsedYears, Optional<List<SyncDataset>> datasets, Optional<LocalDateTime> lastParsed) {
-		this.parsedYears = parsedYears.orElse(new ArrayList<>());
+	public SyncStatus(Optional<List<SyncDataset>> datasets, Optional<LocalDateTime> lastParsed) {
 		this.datasets = datasets.orElse(new ArrayList<>());
 		this.nrDataset = this.datasets.size();
 		if (this.datasets.size() > 0) {
