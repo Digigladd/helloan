@@ -40,8 +40,10 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         
         b.setCommandHandler(AddDatasets.class, (cmd, ctx) -> {
         			Set<String> toAdd = new HashSet<>(cmd.getRefs());
-        			toAdd.removeAll(state().getDatasets());
+        			log.info("Removing all duplicate dataset, {}",toAdd.removeAll(state().getDatasets()));
+        			
         			if (toAdd.size() > 0) {
+        				log.info("{} dataset to add",toAdd.size());
                         final SyncEvent.DatasetsAdded datasetsAdded = new SyncEvent.DatasetsAdded(HashTreePSet.from(toAdd), Optional.of(LocalDateTime.now()));
                         return ctx.thenPersist(datasetsAdded, evt -> ctx.reply(Done.getInstance()));
                     } else {
