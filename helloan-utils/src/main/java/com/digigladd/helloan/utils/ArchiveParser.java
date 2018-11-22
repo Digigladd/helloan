@@ -14,15 +14,13 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.Characters;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
+import javax.xml.stream.events.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 
 public class ArchiveParser {
 	private static final Logger log = LoggerFactory.getLogger(ArchiveParser.class);
@@ -73,19 +71,42 @@ public class ArchiveParser {
 	private static Metadonnees parsePublication(InputStream is) {
 		final XMLInputFactory factory = XMLInputFactory.newInstance();
 		boolean inCompteRendu = false;
+		boolean oldSchema = true;
 		try {
 			if (is != null) {
 				final XMLEventReader reader = factory.createXMLEventReader(is);
+				
 				Metadonnees metadonnees = null;
 				while (reader.hasNext()) {
 					final XMLEvent event = reader.nextEvent();
+					
 					if (event.isStartElement()) {
 						final StartElement element = event.asStartElement();
 						final String elementName = element.getName().getLocalPart();
+						
 						switch (elementName.toLowerCase()) {
+							case Constants.ELEMENT_PUBLICATIONDANBLANC:
+								Iterator it = element.getAttributes();
+								while (it.hasNext()) {
+									Attribute att = (Attribute)it.next();
+									oldSchema = att.getValue().equalsIgnoreCase(Constants.OLD_SCHEMA);
+								}
+								log.info("This file is based on an old schema {}", oldSchema);
+								break;
 							case Constants.ELEMENT_METADONNEES:
 								if (!inCompteRendu) {
 									metadonnees = parseMetadonnees(reader);
+								} else {
+									Metadonnees newMetadonnees = parseMetadonnees(reader);
+									if (!oldSchema) {
+										metadonnees.setDateParution(newMetadonnees.getDateSeance().plusDays(1));
+										metadonnees.setNumParution(newMetadonnees.getNumParution());
+										metadonnees.setDateSeance(newMetadonnees.getDateSeance());
+										if(metadonnees.getNumSeance() == 0) {
+											metadonnees.setNumSeance(newMetadonnees.getNumSeance());
+										}
+										log.info("Metadonnees from new schema {}", metadonnees);
+									}
 								}
 								break;
 							case Constants.ELEMENT_COMPTERENDU:
@@ -161,6 +182,18 @@ public class ArchiveParser {
 						}
 						break;
 					case Constants.ELEMENT_TYPESESSION:
+						metadonnees.setTypeSession(reader.getElementText());
+						break;
+					case Constants.ELEMENT_PARUTION:
+						metadonnees.setNumParution(Integer.parseInt(reader.getElementText()));
+						break;
+					case Constants.ELEMENT_SESSIONPARLEMENTAIRE:
+						String session = reader.getElementText();
+						String[] years = session.split("-");
+						metadonnees.setPeriodeDu(LocalDate.of(Integer.parseInt(years[0]), 1, 1));
+						metadonnees.setPeriodeAu(LocalDate.of(Integer.parseInt(years[1]), 1, 1));
+						break;
+					case Constants.ELEMENT_SESSION:
 						metadonnees.setTypeSession(reader.getElementText());
 						break;
 				}

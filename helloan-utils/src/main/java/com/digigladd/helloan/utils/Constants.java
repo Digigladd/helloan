@@ -26,14 +26,18 @@ public class Constants {
 	public static final String AAA_PREFIX = "AAA";
 	
 	//PUBLICATION PARSING CONSTANTS
+	public static final String ELEMENT_PUBLICATIONDANBLANC = "publicationdanblanc";
 	public static final String ELEMENT_METADONNEES = "metadonnees";
 	public static final String ELEMENT_DATEPARUTION = "dateparution";
 	public static final String ELEMENT_NUMPARUTION = "numparution";
+	public static final String ELEMENT_PARUTION = "parution";
 	public static final String ELEMENT_GREBICHE = "numerogrebiche";
 	public static final String ELEMENT_DATESEANCE = "dateseance";
 	public static final String ELEMENT_STARTPERIODE = "dateacompterdu";
 	public static final String ELEMENT_ENDPERIODE = "datejusquau";
+	public static final String ELEMENT_SESSIONPARLEMENTAIRE = "sessionparlementaire";
 	public static final String ELEMENT_TYPESESSION = "sessionord";
+	public static final String ELEMENT_SESSION = "sessionnom";
 	public static final String ELEMENT_NUMSEANCE = "numseance";
 	public static final String ELEMENT_COMPTERENDU = "compterendu";
 	public static final String ELEMENT_PRESIDENTSEANCE = "presidentseance";
@@ -56,6 +60,8 @@ public class Constants {
 	public static final String ELEMENT_CONTRE = "contre";
 	public static final String ELEMENT_LIBELLE = "libelle";
 	public static final String ELEMENT_VALEUR = "valeur";
+	public static final String OLD_SCHEMA = "..\\..\\..\\schemas_Debats\\publications\\pub_DAN_Fasciculeblanc_V01.xsd";
+	public static final String NEW_SCHEMA = "CahierBlanc_Etalab.xsd";
 	
 	public static Path getDatasetPath(String ref) {
 		return Paths.get(USER_DIR, DATASET_DIR, ref+DATASET_EXTENSION);
