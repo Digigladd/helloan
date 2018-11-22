@@ -247,7 +247,6 @@ public class SeanceServiceImpl implements SeanceService {
 	}
 	
 	private CompletionStage<Done> toSeances(PublicationEvent event) {
-		log.info("Publication event {}",event);
 		if (event instanceof PublicationEvent.PublicationAdded) {
 			final PublicationEvent.PublicationAdded publication = (com.digigladd.helloan.publication.api.PublicationEvent.PublicationAdded)event;
 			

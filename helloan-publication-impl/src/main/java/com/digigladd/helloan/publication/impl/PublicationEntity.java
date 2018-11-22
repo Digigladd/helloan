@@ -22,7 +22,6 @@ public class PublicationEntity extends PersistentEntity<PublicationCommand, Publ
 		);
 		
 		b.setCommandHandler(PublicationCommand.AddPublication.class, (cmd, ctx) -> {
-					log.info("Publication added command!");
 					return ctx.thenPersist(new PublicationEvent.PublicationAdded(
 							cmd.getPublication()
 					), evt -> ctx.reply(Done.getInstance()));
