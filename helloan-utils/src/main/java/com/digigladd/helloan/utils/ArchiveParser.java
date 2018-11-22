@@ -48,15 +48,21 @@ public class ArchiveParser {
 				
 				while ((entry = i.getNextEntry()) != null) {
 					log.info("In entry {}, {}", entry.getName(), entry.getSize());
-					if (entry.getName().startsWith(prefix)) {
-						if (!i.canReadEntryData(entry)) {
-							// log something?
-							continue;
+					if (entry.getName().indexOf("breaks") < -1) {
+						if (entry.getName().startsWith(prefix)) {
+							if (!i.canReadEntryData(entry)) {
+								// log something?
+								continue;
+							}
+							log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
+							metadonnees = parsePublication(i);
+						} else {
+							log.info("This entry {} is not the one requested", entry.getName());
 						}
+					}
+					if (entry.getName().startsWith("PARU")) {
 						log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
-						metadonnees = parsePublication(i);
-					} else {
-						log.info("This entry {} is not the one requested", entry.getName());
+						metadonnees = parseParution(i);
 					}
 				}
 				return metadonnees;
@@ -64,6 +70,39 @@ public class ArchiveParser {
 				log.error("Error while analysing archive {}: {}", ref, e.getMessage());
 				return metadonnees;
 			}
+		}
+		return null;
+	}
+	
+	private static Metadonnees parseParution(InputStream is) {
+		final XMLInputFactory factory = XMLInputFactory.newInstance();
+		try {
+			if (is != null) {
+				final XMLEventReader reader = factory.createXMLEventReader(is);
+				
+				Metadonnees metadonnees = null;
+				log.info("Parsing parution file!");
+				while (reader.hasNext()) {
+					final XMLEvent event = reader.nextEvent();
+					
+					if (event.isStartElement()) {
+						final StartElement element = event.asStartElement();
+						final String elementName = element.getName().getLocalPart();
+						log.info("Parution file, start element: {}", elementName);
+						switch (elementName.toLowerCase()) {
+							case Constants.ELEMENT_PARUTION:
+								metadonnees = parseMetadonnees(reader);
+								break;
+						}
+					}
+				}
+				reader.close();
+				return metadonnees;
+			} else {
+				log.info("InputStream is null");
+			}
+		} catch (Exception e) {
+			log.info("Error parsing input stream: {}", e.getMessage());
 		}
 		return null;
 	}
