@@ -184,27 +184,15 @@ public class ArchiveParser {
 						break;
 					case Constants.ELEMENT_DATEPARUTION:
 						final String dateParution = reader.getElementText();
-						if (dateParution.contains("+")) {
-							metadonnees.setDateParution(LocalDate.parse(dateParution, DateTimeFormatter.ISO_OFFSET_DATE));
-						} else {
-							metadonnees.setDateParution(LocalDate.parse(dateParution, DateTimeFormatter.ISO_LOCAL_DATE));
-						}
+						metadonnees.setDateParution(parseDate(dateParution));
 						break;
 					case Constants.ELEMENT_DATESEANCE:
 						final String dateSeance = reader.getElementText();
-						if (dateSeance.contains("+")) {
-							metadonnees.setDateSeance(LocalDate.parse(dateSeance, DateTimeFormatter.ISO_OFFSET_DATE));
-						} else {
-							metadonnees.setDateSeance(LocalDate.parse(dateSeance, DateTimeFormatter.ISO_LOCAL_DATE));
-						}
+						metadonnees.setDateSeance(parseDate(dateSeance));
 						break;
 					case Constants.ELEMENT_ENDPERIODE:
 						final String endPeriode = reader.getElementText();
-						if (endPeriode.contains("+")) {
-							metadonnees.setPeriodeAu( LocalDate.parse(endPeriode, DateTimeFormatter.ISO_OFFSET_DATE));
-						} else {
-							metadonnees.setPeriodeAu(LocalDate.parse(endPeriode, DateTimeFormatter.ISO_LOCAL_DATE));
-						}
+						metadonnees.setPeriodeAu(parseDate(endPeriode));
 						break;
 					case Constants.ELEMENT_GREBICHE:
 						metadonnees.setNumeroGrebiche(reader.getElementText());
@@ -214,11 +202,7 @@ public class ArchiveParser {
 						break;
 					case Constants.ELEMENT_STARTPERIODE:
 						final String startPeriode = reader.getElementText();
-						if (startPeriode.contains("+")) {
-							metadonnees.setPeriodeDu(LocalDate.parse(startPeriode, DateTimeFormatter.ISO_OFFSET_DATE));
-						} else {
-							metadonnees.setPeriodeDu(LocalDate.parse(startPeriode, DateTimeFormatter.ISO_LOCAL_DATE));
-						}
+						metadonnees.setPeriodeDu(parseDate(startPeriode));
 						break;
 					case Constants.ELEMENT_TYPESESSION:
 						metadonnees.setTypeSession(reader.getElementText());
@@ -537,5 +521,19 @@ public class ArchiveParser {
 			}
 		}
 		return valeur;
+	}
+	
+	private static LocalDate parseDate(String date) {
+		LocalDate theDate = LocalDate.MIN;
+		try {
+			if (date.contains("+")) {
+				theDate = LocalDate.parse(date, DateTimeFormatter.ISO_OFFSET_DATE);
+			} else {
+				theDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
+			}
+		} catch (Exception e) {
+			log.error("Unable to parse date {}, {}", date, e.getMessage());
+		}
+		return theDate;
 	}
 }
