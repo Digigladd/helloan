@@ -36,7 +36,7 @@ public class ArchiveParser {
 	private static Metadonnees getFromArchive(String ref, String prefix) {
 		Metadonnees metadonnees = null;
 		if (prefix.equalsIgnoreCase(Constants.AAA_PREFIX) || prefix.equalsIgnoreCase(Constants.CRI_PREFIX)) {
-			log.info("Analysing {} archive", ref);
+			log.info("GetFromArchive, Analysing {} archive", ref);
 			Path uploadPath = Constants.getDatasetPath(ref);
 			try (InputStream fi = Files.newInputStream(uploadPath);
 				 InputStream bi = new BufferedInputStream(fi);
@@ -96,7 +96,7 @@ public class ArchiveParser {
 						}
 					}
 				}
-				reader.close();
+				//reader.close();
 				return metadonnees;
 			} else {
 				log.info("InputStream is null");
@@ -122,7 +122,6 @@ public class ArchiveParser {
 					if (event.isStartElement()) {
 						final StartElement element = event.asStartElement();
 						final String elementName = element.getName().getLocalPart();
-						
 						switch (elementName.toLowerCase()) {
 							case Constants.ELEMENT_PUBLICATIONDANBLANC:
 								Iterator it = element.getAttributes();
@@ -149,6 +148,7 @@ public class ArchiveParser {
 								}
 								break;
 							case Constants.ELEMENT_COMPTERENDU:
+								
 								inCompteRendu = true;
 								metadonnees.setNrSeance(metadonnees.getNrSeance()+1);
 								break;
@@ -156,7 +156,7 @@ public class ArchiveParser {
 						}
 					}
 				}
-				reader.close();
+				//reader.close();
 				return metadonnees;
 			} else {
 				log.info("InputStream is null");
@@ -171,7 +171,7 @@ public class ArchiveParser {
 		Metadonnees metadonnees = new Metadonnees();
 		while (reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
-			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(Constants.ELEMENT_METADONNEES)) {
+			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_METADONNEES)) {
 				break;
 			}
 			if (event.isStartElement()) {
@@ -242,7 +242,7 @@ public class ArchiveParser {
 	}
 	
 	public static CompteRendu getCompteRendu(String ref, Integer session) {
-		log.info("Analysing {} archive", ref);
+		log.info("GetCompteRendu, Analysing {} archive", ref);
 		Path uploadPath = Constants.getDatasetPath(ref);
 		CompteRendu compteRendu = null;
 		try (InputStream fi = Files.newInputStream(uploadPath);
@@ -282,7 +282,7 @@ public class ArchiveParser {
 				final XMLEventReader reader = factory.createXMLEventReader(is,"UTF-8");
 				while (reader.hasNext()) {
 					final XMLEvent event = reader.nextEvent();
-					if (event.isStartElement() && event.asStartElement().getName().getLocalPart().equals(Constants.ELEMENT_COMPTERENDU)) {
+					if (event.isStartElement() && event.asStartElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_COMPTERENDU)) {
 						currentSession += 1;
 						if (currentSession == session) {
 							compteRendu = parseCompteRendu(reader);
@@ -307,7 +307,7 @@ public class ArchiveParser {
 		CompteRendu compteRendu = new CompteRendu();
 		while (reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
-			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(Constants.ELEMENT_COMPTERENDU)) {
+			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_COMPTERENDU)) {
 				break;
 			}
 			if (event.isStartElement()) {
@@ -384,7 +384,7 @@ public class ArchiveParser {
 		while (reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
 			
-			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(Constants.ELEMENT_PARA)) {
+			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_PARA)) {
 				break;
 			}
 			if (event.isStartElement()) {
@@ -438,7 +438,7 @@ public class ArchiveParser {
 		while(reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
 			
-			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(Constants.ELEMENT_NOTA)) {
+			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_NOTA)) {
 				break;
 			}
 			if (event.isCharacters()) {
@@ -455,7 +455,7 @@ public class ArchiveParser {
 		while (reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
 			
-			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(Constants.ELEMENT_TITRE)) {
+			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_TITRE)) {
 				break;
 			}
 			if (event.isCharacters()) {
@@ -479,7 +479,7 @@ public class ArchiveParser {
 		while (reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
 			
-			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(Constants.ELEMENT_RESULTATVOTE)) {
+			if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equalsIgnoreCase(Constants.ELEMENT_RESULTATVOTE)) {
 				break;
 			}
 			if (event.isStartElement()) {
@@ -517,7 +517,7 @@ public class ArchiveParser {
 				final EndElement element = event.asEndElement();
 				final String elementName = element.getName().getLocalPart();
 				
-				if (!elementName.equals(Constants.ELEMENT_LIBELLE) && !elementName.equals(Constants.ELEMENT_VALEUR)) {
+				if (!elementName.equals(Constants.ELEMENT_LIBELLE) && !elementName.equalsIgnoreCase(Constants.ELEMENT_VALEUR)) {
 					break;
 				}
 			}

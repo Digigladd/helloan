@@ -162,6 +162,7 @@ public class PublicationServiceImpl implements PublicationService {
 	
 	private Pair<PublicationEvent, Offset> convertEvent(Pair<com.digigladd.helloan.publication.impl.PublicationEvent, Offset> pair) {
 		PublicationEvent evt;
+		log.info("Converting publication event {}", pair.first());
 		if (pair.first() instanceof com.digigladd.helloan.publication.impl.PublicationEvent.PublicationAdded) {
 			com.digigladd.helloan.publication.impl.Publication publication = ((com.digigladd.helloan.publication.impl.PublicationEvent.PublicationAdded) pair.first()).getPublication();
 			evt = new PublicationEvent.PublicationAdded(publication.ref, publication.numeroGrebiche, publication.nrSeance);

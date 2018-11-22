@@ -6,14 +6,11 @@ package com.digigladd.helloan.seance.impl;
 
 import akka.Done;
 import akka.NotUsed;
-import akka.actor.ActorSystem;
 import akka.japi.Pair;
-import akka.management.AkkaManagement;
 import akka.stream.javadsl.Flow;
 import com.digigladd.helloan.publication.api.PublicationEvent;
 import com.digigladd.helloan.publication.api.PublicationService;
 import com.digigladd.helloan.seance.api.Evenement;
-import com.digigladd.helloan.seance.api.PullSeance;
 import com.digigladd.helloan.seance.api.SeanceService;
 import com.digigladd.helloan.seance.api.Valeur;
 import com.digigladd.helloan.utils.*;
@@ -52,7 +49,7 @@ public class SeanceServiceImpl implements SeanceService {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SeanceEntity.class);
 		publicationService.pubEvents().subscribe().atLeastOnce(
-				Flow.<PublicationEvent>create().mapAsync(2, this::toSeances)
+				Flow.<PublicationEvent>create().mapAsync(1, this::toSeances)
 		);
 	}
 	
@@ -250,8 +247,9 @@ public class SeanceServiceImpl implements SeanceService {
 	}
 	
 	private CompletionStage<Done> toSeances(PublicationEvent event) {
+		log.info("Publication event {}",event);
 		if (event instanceof PublicationEvent.PublicationAdded) {
-			final PublicationEvent.PublicationAdded publication = (PublicationEvent.PublicationAdded)event;
+			final PublicationEvent.PublicationAdded publication = (com.digigladd.helloan.publication.api.PublicationEvent.PublicationAdded)event;
 			
 			return doAll(
 					Stream.iterate(1, n -> n+1).limit(publication.sessions).map(
