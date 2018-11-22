@@ -34,6 +34,6 @@ bin
 .tmpBin
 .factorypath
 .settings
-logs/*
+logs/*.log
 datasets/AN_*
 .idea
