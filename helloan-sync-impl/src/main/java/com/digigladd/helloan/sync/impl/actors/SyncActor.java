@@ -65,7 +65,15 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	public static final class Fetch {
-	
+		public final Optional<String> ref;
+		
+		public Fetch() {
+			this.ref = Optional.empty();
+		}
+		
+		public Fetch(String ref) {
+			this.ref = Optional.of(ref);
+		}
 	}
 	
 	
@@ -90,10 +98,11 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private void fetch(Fetch fetch) {
-		log.info("Received Fetch!");
+		log.info("Received Fetch! {}", fetch);
+		final String lastRef = fetch.ref.orElse("");
 		ref.ask(new SyncCommand.Get()).thenApply(
 				state -> {
-					Optional<Dataset> dataset = state.getDatasets().stream().filter(f -> !f.fetched).findFirst();
+					Optional<Dataset> dataset = state.getDatasets().stream().filter(f -> !f.fetched && f.getRef() != lastRef).findFirst();
 					if (dataset.isPresent()) {
 						return this.fetchDataset(dataset.get().getRef());
 					} else {

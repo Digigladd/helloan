@@ -48,7 +48,7 @@ public class ArchiveParser {
 				
 				while ((entry = i.getNextEntry()) != null) {
 					log.info("In entry {}, {}", entry.getName(), entry.getSize());
-					if (entry.getName().indexOf("breaks") < -1) {
+					if (entry.getName().indexOf("breaks") < 0) {
 						if (entry.getName().startsWith(prefix)) {
 							if (!i.canReadEntryData(entry)) {
 								// log something?
