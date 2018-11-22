@@ -12,6 +12,7 @@ services:
       - CAS=${CAS}
     volumes:
       - ../datasets:/opt/docker/datasets
+      - ../logs:/opt/docker/logs
     networks:
       - default
     ports:
