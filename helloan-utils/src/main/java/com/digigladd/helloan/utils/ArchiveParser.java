@@ -90,10 +90,9 @@ public class ArchiveParser {
 				Path uploadPath = Constants.getDatasetPath(ref);
 				try (InputStream fi = Files.newInputStream(uploadPath);
 					 InputStream bi = new BufferedInputStream(fi);
-					 InputStream ci = new ArchiveStreamFactory()
-							 .createArchiveInputStream(bi);
 					 ArchiveInputStream i = new ArchiveStreamFactory()
-							 .createArchiveInputStream(new BufferedInputStream(ci))) {
+							 .createArchiveInputStream(bi);
+					 ) {
 					ArchiveEntry entry;
 					
 					while ((entry = i.getNextEntry()) != null) {
