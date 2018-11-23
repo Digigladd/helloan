@@ -87,7 +87,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
 					Optional.of(
 							TreePVector.from(state().getDatasets().stream().map(
 									dataset -> {
-										if (dataset.ref == evt.ref) {
+										if (dataset.ref.equalsIgnoreCase(evt.ref)) {
 											return new Dataset(evt.getRef(), Optional.of(evt.getSize()), Optional.of(true));
 										} else {
 											return dataset;
