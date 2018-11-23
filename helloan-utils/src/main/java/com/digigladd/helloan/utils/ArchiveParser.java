@@ -98,6 +98,15 @@ public class ArchiveParser {
 						if (entry.getName().indexOf(".tar") >= 0) {
 							return parseTarArchive(ref, prefix, i);
 						}
+						if (entry.getName().startsWith(prefix)) {
+							if (!i.canReadEntryData(entry)) {
+								// log something?
+								continue;
+							}
+							metadonnees = parsePublication(i);
+						} else {
+							log.info("getFromArchive skip {}", entry.getName());
+						}
 					}
 					return metadonnees;
 				} catch (Exception e) {
