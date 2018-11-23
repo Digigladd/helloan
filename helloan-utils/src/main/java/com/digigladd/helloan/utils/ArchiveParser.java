@@ -7,6 +7,7 @@ package com.digigladd.helloan.utils;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,10 +69,65 @@ public class ArchiveParser {
 				return metadonnees;
 			} catch (Exception e) {
 				log.error("Error while analysing archive {}: {}", ref, e.getMessage());
-				return metadonnees;
+				if (e instanceof CompressorException) {
+					log.info("Trying analyze without compressor for archive {}", ref);
+					return getFromArchive(ref, prefix, false);
+				} else {
+					return metadonnees;
+				}
 			}
 		}
 		return null;
+	}
+	
+	private static Metadonnees getFromArchive(String ref, String prefix, boolean compressor) {
+		if (compressor) {
+			return getFromArchive(ref, prefix);
+		} else {
+			Metadonnees metadonnees = null;
+			if (prefix.equalsIgnoreCase(Constants.AAA_PREFIX) || prefix.equalsIgnoreCase(Constants.CRI_PREFIX)) {
+				log.info("GetFromArchive, Analysing {} archive", ref);
+				Path uploadPath = Constants.getDatasetPath(ref);
+				try (InputStream fi = Files.newInputStream(uploadPath);
+					 InputStream bi = new BufferedInputStream(fi);
+					 InputStream ci = new ArchiveStreamFactory()
+							 .createArchiveInputStream(bi);
+					 ArchiveInputStream i = new ArchiveStreamFactory()
+							 .createArchiveInputStream(new BufferedInputStream(ci))) {
+					ArchiveEntry entry;
+					
+					while ((entry = i.getNextEntry()) != null) {
+						log.info("In entry {}, {}", entry.getName(), entry.getSize());
+						if (entry.getName().indexOf("breaks") < 0) {
+							if (entry.getName().startsWith(prefix)) {
+								if (!i.canReadEntryData(entry)) {
+									// log something?
+									continue;
+								}
+								log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
+								metadonnees = parsePublication(i);
+							} else {
+								log.info("This entry {} is not the one requested", entry.getName());
+							}
+						}
+						if (entry.getName().startsWith("PARU")) {
+							log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
+							metadonnees = parseParution(i);
+						}
+					}
+					return metadonnees;
+				} catch (Exception e) {
+					log.error("Error while analysing archive {}: {}", ref, e.getMessage());
+					if (e instanceof CompressorException) {
+						log.info("Trying analyze without compressor for archive {}", ref);
+						return getFromArchive(ref, prefix, false);
+					} else {
+						return metadonnees;
+					}
+				}
+			}
+			return null;
+		}
 	}
 	
 	private static Metadonnees parseParution(InputStream is) {
@@ -168,6 +224,7 @@ public class ArchiveParser {
 	}
 	
 	private static Metadonnees parseMetadonnees(final XMLEventReader reader) throws XMLStreamException {
+		
 		Metadonnees metadonnees = new Metadonnees();
 		while (reader.hasNext()) {
 			final XMLEvent event = reader.nextEvent();
