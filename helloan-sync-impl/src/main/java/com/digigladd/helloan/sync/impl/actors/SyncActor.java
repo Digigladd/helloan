@@ -19,8 +19,6 @@ import com.digigladd.helloan.utils.Constants;
 import com.digigladd.helloan.utils.Urls;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
-import static akka.pattern.PatternsCS.pipe;
-import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
 
 import javax.inject.Inject;
 import java.net.URL;
@@ -106,17 +104,15 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private void fetch(Fetch fetch) {
-		log.info("Received Fetch! {}", fetch.ref.get());
+		log.info("fetch {}", fetch.ref.get());
 		if (fetch.ref.isPresent()) {
 			this.fetchDataset(fetch.ref.get());
-		} else {
-			log.error("Fetch is empty!");
 		}
 	}
 	
 	private void tick(Tick tick) {
 		//a tick triggers a full parsing of the external repo to get the list of all datasets available.
-		log.info("Received tick!");
+		log.info("tick");
 		if (state != null) {
 			if (!parsing) {
 				parsing = true;
@@ -144,7 +140,7 @@ public class SyncActor extends AbstractActorWithTimers {
 		} else {
 			CompletionStage<SyncState> currentState = ref.ask(new SyncCommand.Get());
 			currentState.exceptionally(t -> {
-				log.error("Get sync failed {}",t.getMessage());
+				log.error("tick, get failed {}",t.getMessage());
 				self().tell(new Tick(), self());
 				return null;
 			});
@@ -162,16 +158,17 @@ public class SyncActor extends AbstractActorWithTimers {
 	
 	private void createDataset() {
 		if (datasetQueue.size() > 0) {
+			log.info("createDataset, queue size {}", datasetQueue.size());
 			self().tell(new SyncCommand.AddDataset(datasetQueue.poll()), self());
 		} else {
-			log.info("No more dataset to fetch");
+			log.info("createDataset, no more dataset to fetch");
 		}
 	}
 	
 	private CompletionStage<Done> handleEntityCommand(SyncCommand.AddDataset cmd) {
 		return ref.ask(cmd).thenApply(
 				done -> {
-					log.info("{} successfully done!", cmd);
+					log.info("handleEntityCommand {}, {}", cmd, done);
 					createDataset();
 					return Done.getInstance();
 				}
@@ -208,16 +205,19 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private CompletionStage<Done> fetchDataset(final String fetch) {
-		log.info("Fetch dataset {}!", fetch);
+		log.info("fetchDataset {}", fetch);
 		String url = Urls.getDataset(fetch);
 		Path uploadPath = Constants.getDatasetPath(fetch);
-		
-		try {
-			FileUtils.copyURLToFile(new URL(url), uploadPath.toFile());
-			log.info("Dataset uploaded, size {}",uploadPath.toFile().length());
-			return ref.ask(new SyncCommand.FetchDataset(fetch, uploadPath.toFile().length()));
-		} catch (Exception e) {
-			log.error("Error while downloading {}: {}", fetch, e);
+		if (!uploadPath.toFile().exists()) {
+			try {
+				FileUtils.copyURLToFile(new URL(url), uploadPath.toFile());
+				return ref.ask(new SyncCommand.FetchDataset(fetch, uploadPath.toFile().length()));
+			} catch (Exception e) {
+				log.error("fetchDataset error {}: {}", fetch, e);
+				return CompletableFuture.completedFuture(Done.getInstance());
+			}
+		} else {
+			log.info("fetchDataset skip {}", fetch);
 			return CompletableFuture.completedFuture(Done.getInstance());
 		}
 	}

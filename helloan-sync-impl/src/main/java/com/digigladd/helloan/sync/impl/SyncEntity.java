@@ -33,7 +33,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
     
     @Override
     public Behavior initialBehavior(Optional<SyncState> snapshotState) {
-		log.info("Initial behavior from state: {}", snapshotState.orElse(SyncState.EMPTY));
+		log.info("initialBehavior: {}", snapshotState.orElse(SyncState.EMPTY));
 		BehaviorBuilder b = newBehaviorBuilder(
         	snapshotState.orElse(SyncState.EMPTY)
         );
@@ -41,7 +41,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         b.setCommandHandler(AddDataset.class, (cmd, ctx) -> {
         			String toAdd = cmd.getRef();
         			boolean alreadyExists = state().getDatasets().stream().filter(f -> f.getRef() == toAdd).count() > 0;
-        			log.info("{} dataset is already present {}", toAdd, alreadyExists);
+        			log.info("commandHandler {}, {}", cmd, alreadyExists);
         			
         			if (!alreadyExists) {
         				final SyncEvent.DatasetAdded datasetsAdded = new SyncEvent.DatasetAdded(toAdd, Optional.of(LocalDateTime.now()));
@@ -50,25 +50,27 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
 								}
                         );
                     } else {
-        				log.info("No dataset to add");
-                        return ctx.done();
+        				return ctx.done();
                     }
                 }
         );
         
         b.setCommandHandler(FetchDataset.class, (cmd, ctx) -> {
+        	log.info("commandHandler {}",cmd);
             final SyncEvent.DatasetFetched datasetFetched = new SyncEvent.DatasetFetched(cmd.getRef(),cmd.getSize());
             
             return ctx.thenPersist(datasetFetched, evt -> ctx.reply(Done.getInstance()));
         });
 
         b.setReadOnlyCommandHandler(Get.class, (cmd, ctx) -> {
+        			log.info("readOnlyCommandHandler {}",cmd);
         			ctx.reply(state());
 				}
         
         );
         
         b.setEventHandler(SyncEvent.DatasetAdded.class, evt -> {
+        	log.info("eventHandler {}", evt);
             Optional<LocalDateTime> lastParsed = state().getLastParsed();
             SyncState newState = new SyncState(
 					Optional.of(
@@ -76,11 +78,11 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
 					),
 					lastParsed
 			);
-            log.info("Dataset added {}", evt.getDataset());
             return newState;
         });
         
         b.setEventHandler(SyncEvent.DatasetFetched.class, evt -> {
+			log.info("eventHandler {}", evt);
             SyncState newState = new SyncState(
 					Optional.of(
 							TreePVector.from(state().getDatasets().stream().map(
@@ -94,7 +96,6 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
 							).collect(Collectors.toList()))),
 					state().lastParsed
 			);
-            log.info("Dataset fetched {}", evt.getRef());
             return newState;
         });
         return b.build();

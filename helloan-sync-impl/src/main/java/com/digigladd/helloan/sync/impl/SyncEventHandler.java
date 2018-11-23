@@ -67,18 +67,18 @@ public class SyncEventHandler {
 		}
 		
 		private CompletionStage<List<BoundStatement>> datasetFetched(SyncEvent.DatasetFetched event) {
-			log.info("Dataset fetched {}", event);
+			log.info("Event Handler {}", event);
 			return CompletableFuture.completedFuture(new ArrayList<>());
 		}
 		
 		private CompletionStage<List<BoundStatement>> datasetAdded(SyncEvent.DatasetAdded event) {
-			log.info("Dataset added {}", event.getDataset());
+			log.info("Event Handler {}", event);
 			this.syncActor.tell(new SyncActor.Fetch(event.getDataset()), null);
 			return CompletableFuture.completedFuture(new ArrayList<>());
 		}
 		
 		private CompletionStage<Done> prepare(AggregateEventTag<SyncEvent> syncEventAggregateEventTag) {
-			log.info("Prepare sync event processor {}", syncEventAggregateEventTag);
+			log.info("Event Handler prepare {}", syncEventAggregateEventTag);
 			this.syncActor.tell(new SyncActor.Tick(), null);
 			return CompletableFuture.completedFuture(Done.getInstance());
 		}
@@ -90,7 +90,7 @@ public class SyncEventHandler {
 		}
 		
 		private CompletionStage<Done> globalPrepare() {
-			log.info("Global prepare sync event processor");
+			log.info("Event Handler globalPrepare");
 			return CompletableFuture.completedFuture(Done.getInstance());
 		}
 		
