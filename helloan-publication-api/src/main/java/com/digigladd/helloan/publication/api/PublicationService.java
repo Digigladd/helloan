@@ -10,6 +10,7 @@ import com.lightbend.lagom.javadsl.api.Descriptor;
 import com.lightbend.lagom.javadsl.api.Service;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
 import com.lightbend.lagom.javadsl.api.broker.Topic;
+import com.lightbend.lagom.javadsl.api.transport.Method;
 import org.pcollections.PSequence;
 
 import java.util.Optional;
@@ -21,6 +22,8 @@ public interface PublicationService extends Service {
 	
 	ServiceCall<NotUsed, PSequence<Publication>> listPublications();
 	
+	ServiceCall<NotUsed, PSequence<String>> sync();
+	
 	ServiceCall<NotUsed, NotUsed> status();
 	
 	Topic<PublicationEvent> pubEvents();
@@ -29,9 +32,10 @@ public interface PublicationService extends Service {
 	default Descriptor descriptor() {
 		return named("publication")
 				.withCalls(
-						pathCall("/api/publication/:numeroGrebiche", this::getPublication),
+						restCall(Method.GET, "/api/publication/:numeroGrebiche", this::getPublication),
 						pathCall("/api/publications", this::listPublications),
-						pathCall("/api/publication/status", this::status)
+						restCall(Method.POST, "/api/publication/sync", this::sync),
+						restCall(Method.HEAD, "/api/publication/status", this::status)
 				)
 				.withTopics(
 						topic(Constants.PUBLICATION_EVENTS, this::pubEvents)

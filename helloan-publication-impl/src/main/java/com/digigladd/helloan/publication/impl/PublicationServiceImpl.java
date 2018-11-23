@@ -14,6 +14,7 @@ import com.digigladd.helloan.publication.api.PublicationService;
 import com.digigladd.helloan.publication.api.Session;
 import com.digigladd.helloan.sync.api.SyncEvent;
 import com.digigladd.helloan.sync.api.SyncService;
+import com.digigladd.helloan.sync.api.SyncStatus;
 import com.digigladd.helloan.utils.ArchiveParser;
 import com.digigladd.helloan.utils.Metadonnees;
 import com.lightbend.lagom.javadsl.api.ServiceCall;
@@ -32,16 +33,19 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class PublicationServiceImpl implements PublicationService {
 	private final PersistentEntityRegistry persistentEntityRegistry;
-	
 	private final PublicationRepository publicationRepository;
+	private final SyncService syncService;
+	private boolean syncing = false;
 	
 	private final Logger log = LoggerFactory.getLogger(PublicationServiceImpl.class);
 	
@@ -54,8 +58,8 @@ public class PublicationServiceImpl implements PublicationService {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(PublicationEntity.class);
 		this.publicationRepository = publicationRepository;
-		
-		syncService.syncEvents().subscribe().atLeastOnce(
+		this.syncService = syncService;
+		this.syncService.syncEvents().subscribe().atLeastOnce(
 				Flow.<SyncEvent>create().map(this::getCRI).mapAsync(1, this::createPublication)
 		);
 	}
@@ -64,6 +68,19 @@ public class PublicationServiceImpl implements PublicationService {
 		Optional<Metadonnees> metadonnees = Optional.empty();
 		if (event.getRef().isPresent()) {
 			final String ref = event.getRef().get();
+			Metadonnees meta = ArchiveParser.getCRI(ref);
+			
+			if (meta != null) {
+				meta.setRef(ref);
+				metadonnees = Optional.of(meta);
+			}
+		}
+		return metadonnees;
+	}
+	
+	private Optional<Metadonnees> getCRI(final String ref) {
+		Optional<Metadonnees> metadonnees = Optional.empty();
+		if (ref != null) {
 			Metadonnees meta = ArchiveParser.getCRI(ref);
 			
 			if (meta != null) {
@@ -125,6 +142,35 @@ public class PublicationServiceImpl implements PublicationService {
 				).thenApply(
 						TreePVector::from
 				);
+	}
+	
+	@Override
+	public ServiceCall<NotUsed, PSequence<String>> sync() {
+		
+		CompletionStage<SyncStatus> syncStatus =  syncService.hello().invoke();
+		CompletionStage<PSequence<com.digigladd.helloan.publication.impl.Publication>> listPublications = publicationRepository.getPublications();
+		CompletionStage<PSequence<String>> notSync = syncStatus.thenCombine(listPublications, (status, publications) -> {
+			final Set<String> uniquePublication = publications.stream()
+					.map(m -> m.ref)
+					.collect(Collectors.toSet());
+			return TreePVector.from(status.datasets.stream()
+					.filter(f -> f.fetched && !uniquePublication.contains(f.ref))
+					.map(m -> m.ref)
+					.collect(Collectors.toList()));
+		});
+		
+		return request -> {
+			if (!syncing) {
+				return notSync.thenCompose(this::parseUnsync);
+			} else {
+				return notSync;
+			}
+		};
+	}
+	
+	private CompletionStage<PSequence<String>> parseUnsync(PSequence<String> unsync) {
+		log.info("{} unsync publication(s), proceeding with analysis!");
+		return doAll(unsync.stream().map(this::getCRI).map(this::createPublication).collect(Collectors.toList())).thenApply(done -> unsync);
 	}
 	
 	@Override
