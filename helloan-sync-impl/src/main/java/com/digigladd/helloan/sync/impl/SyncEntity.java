@@ -39,8 +39,8 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         );
         
         b.setCommandHandler(AddDataset.class, (cmd, ctx) -> {
-        			String toAdd = cmd.getRef();
-        			boolean alreadyExists = state().getDatasets().stream().filter(f -> f.getRef() == toAdd).count() > 0;
+        			final String toAdd = cmd.getRef();
+        			boolean alreadyExists = state().getDatasets().stream().filter(f -> f.getRef().equalsIgnoreCase(toAdd)).count() > 0;
         			log.info("commandHandler {}, {}", cmd, alreadyExists);
         			
         			if (!alreadyExists) {
