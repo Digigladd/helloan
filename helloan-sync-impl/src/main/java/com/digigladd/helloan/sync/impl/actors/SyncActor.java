@@ -218,7 +218,7 @@ public class SyncActor extends AbstractActorWithTimers {
 			}
 		} else {
 			log.info("fetchDataset skip {}", fetch);
-			return CompletableFuture.completedFuture(Done.getInstance());
+			return ref.ask(new SyncCommand.FetchDataset(fetch, uploadPath.toFile().length()));
 		}
 	}
 	
