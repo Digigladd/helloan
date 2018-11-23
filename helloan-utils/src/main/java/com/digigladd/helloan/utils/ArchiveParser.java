@@ -121,7 +121,7 @@ public class ArchiveParser {
 	private static Metadonnees parseTarArchive(String ref, String prefix, InputStream is) {
 		log.info("parseTarArchive {}, {}", ref, prefix);
 		Metadonnees metadonnees = null;
-		try (ArchiveInputStream i = new ArchiveStreamFactory().createArchiveInputStream(is)) {
+		try (ArchiveInputStream i = new ArchiveStreamFactory().createArchiveInputStream(new BufferedInputStream(is))) {
 			ArchiveEntry entry;
 			
 			while ((entry = i.getNextEntry()) != null) {
