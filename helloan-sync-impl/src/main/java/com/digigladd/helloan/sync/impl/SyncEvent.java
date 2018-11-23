@@ -31,13 +31,13 @@ public interface SyncEvent extends CompressedJsonable, AggregateEvent<SyncEvent>
     @SuppressWarnings("serial")
     @Value
     @JsonDeserialize
-    final class DatasetsAdded implements SyncEvent {
-        public final PSet<String> datasets;
+    final class DatasetAdded implements SyncEvent {
+        public final String dataset;
         public final Optional<LocalDateTime> lastParsed;
         
         @JsonCreator
-        public DatasetsAdded(PSet<String> datasets, Optional<LocalDateTime> lastParsed) {
-            this.datasets = Preconditions.checkNotNull(datasets, "datasets");
+        public DatasetAdded(String dataset, Optional<LocalDateTime> lastParsed) {
+            this.dataset = Preconditions.checkNotNull(dataset, "dataset");
             this.lastParsed = lastParsed;
         }
     }

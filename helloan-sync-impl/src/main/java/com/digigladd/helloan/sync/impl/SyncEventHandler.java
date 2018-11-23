@@ -61,25 +61,25 @@ public class SyncEventHandler {
 			return readSide.<SyncEvent>builder("syncEventHandlerOffset")
 					.setGlobalPrepare(this::globalPrepare)
 					.setPrepare(this::prepare)
-					.setEventHandler(SyncEvent.DatasetsAdded.class, this::datasetsAdded)
+					.setEventHandler(SyncEvent.DatasetAdded.class, this::datasetAdded)
 					.setEventHandler(SyncEvent.DatasetFetched.class, this::datasetFetched)
 					.build();
 		}
 		
 		private CompletionStage<List<BoundStatement>> datasetFetched(SyncEvent.DatasetFetched event) {
 			log.info("Dataset fetched {}", event);
-			this.syncActor.tell(new SyncActor.Fetch(), null);
 			return CompletableFuture.completedFuture(new ArrayList<>());
 		}
 		
-		private CompletionStage<List<BoundStatement>> datasetsAdded(SyncEvent.DatasetsAdded event) {
-			log.info("Datasets added {}", event.getDatasets());
-			this.syncActor.tell(new SyncActor.Fetch(), null);
+		private CompletionStage<List<BoundStatement>> datasetAdded(SyncEvent.DatasetAdded event) {
+			log.info("Dataset added {}", event.getDataset());
+			this.syncActor.tell(new SyncActor.Fetch(event.getDataset()), null);
 			return CompletableFuture.completedFuture(new ArrayList<>());
 		}
 		
 		private CompletionStage<Done> prepare(AggregateEventTag<SyncEvent> syncEventAggregateEventTag) {
 			log.info("Prepare sync event processor {}", syncEventAggregateEventTag);
+			this.syncActor.tell(new SyncActor.Tick(), null);
 			return CompletableFuture.completedFuture(Done.getInstance());
 		}
 		

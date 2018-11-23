@@ -53,12 +53,12 @@ public interface SyncCommand extends CompressedJsonable {
     @SuppressWarnings("serial")
     @Value
     @JsonDeserialize
-    final class AddDatasets implements SyncCommand, PersistentEntity.ReplyType<Done> {
-        private final PSet<String> refs;
+    final class AddDataset implements SyncCommand, PersistentEntity.ReplyType<Done> {
+        private final String ref;
         
         @JsonCreator
-        public AddDatasets(PSet<String> refs) {
-            this.refs = Objects.requireNonNull(refs, "refs");
+        public AddDataset(String ref) {
+            this.ref = Objects.requireNonNull(ref, "ref");
         }
     }
     

@@ -33,20 +33,24 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
     
     @Override
     public Behavior initialBehavior(Optional<SyncState> snapshotState) {
-        
-        BehaviorBuilder b = newBehaviorBuilder(
-            snapshotState.orElse(SyncState.EMPTY)
+		log.info("Initial behavior from state: {}", snapshotState.orElse(SyncState.EMPTY));
+		BehaviorBuilder b = newBehaviorBuilder(
+        	snapshotState.orElse(SyncState.EMPTY)
         );
         
-        b.setCommandHandler(AddDatasets.class, (cmd, ctx) -> {
-        			Set<String> toAdd = new HashSet<>(cmd.getRefs());
-        			log.info("Removing all duplicate dataset, {}",toAdd.removeAll(state().getDatasets()));
+        b.setCommandHandler(AddDataset.class, (cmd, ctx) -> {
+        			String toAdd = cmd.getRef();
+        			boolean alreadyExists = state().getDatasets().stream().filter(f -> f.getRef() == toAdd).count() > 0;
+        			log.info("{} dataset is already present {}", toAdd, alreadyExists);
         			
-        			if (toAdd.size() > 0) {
-        				log.info("{} dataset to add",toAdd.size());
-                        final SyncEvent.DatasetsAdded datasetsAdded = new SyncEvent.DatasetsAdded(HashTreePSet.from(toAdd), Optional.of(LocalDateTime.now()));
-                        return ctx.thenPersist(datasetsAdded, evt -> ctx.reply(Done.getInstance()));
+        			if (!alreadyExists) {
+        				final SyncEvent.DatasetAdded datasetsAdded = new SyncEvent.DatasetAdded(toAdd, Optional.of(LocalDateTime.now()));
+                        return ctx.thenPersist(datasetsAdded, evt -> {
+                        			ctx.reply(Done.getInstance());
+								}
+                        );
                     } else {
+        				log.info("No dataset to add");
                         return ctx.done();
                     }
                 }
@@ -64,19 +68,15 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         
         );
         
-        b.setEventHandler(SyncEvent.DatasetsAdded.class, evt -> {
+        b.setEventHandler(SyncEvent.DatasetAdded.class, evt -> {
             Optional<LocalDateTime> lastParsed = state().getLastParsed();
             SyncState newState = new SyncState(
 					Optional.of(
-							TreePVector.from(Stream.concat(
-									state().getDatasets().stream(),
-									evt.datasets.stream().map(
-											m -> new Dataset(m, Optional.empty(), Optional.empty())
-									)
-							).collect(Collectors.toList()))
+							state().getDatasets().plus(new Dataset(evt.dataset, Optional.empty(), Optional.empty()))
 					),
 					lastParsed
 			);
+            log.info("Dataset added {}", evt.getDataset());
             return newState;
         });
         
@@ -94,6 +94,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
 							).collect(Collectors.toList()))),
 					state().lastParsed
 			);
+            log.info("Dataset fetched {}", evt.getRef());
             return newState;
         });
         return b.build();

@@ -91,41 +91,54 @@ public class ArchiveParser {
 				try (InputStream fi = Files.newInputStream(uploadPath);
 					 InputStream bi = new BufferedInputStream(fi);
 					 ArchiveInputStream i = new ArchiveStreamFactory()
-							 .createArchiveInputStream(bi);
+							 .createArchiveInputStream(bi)
 					 ) {
 					ArchiveEntry entry;
 					
 					while ((entry = i.getNextEntry()) != null) {
 						log.info("In entry {}, {}", entry.getName(), entry.getSize());
-						if (entry.getName().indexOf("breaks") < 0) {
-							if (entry.getName().startsWith(prefix)) {
-								if (!i.canReadEntryData(entry)) {
-									// log something?
-									continue;
-								}
-								log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
-								metadonnees = parsePublication(i);
-							} else {
-								log.info("This entry {} is not the one requested", entry.getName());
-							}
-						}
-						if (entry.getName().startsWith("PARU")) {
-							log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
-							metadonnees = parseParution(i);
+						if (entry.getName().indexOf(".tar") >= 0) {
+							return parseTarArchive(ref, prefix, i);
 						}
 					}
 					return metadonnees;
 				} catch (Exception e) {
 					log.error("Error while analysing archive {}: {}", ref, e.getMessage());
-					if (e instanceof CompressorException) {
-						log.info("Trying analyze without compressor for archive {}", ref);
-						return getFromArchive(ref, prefix, false);
-					} else {
-						return metadonnees;
-					}
+					return metadonnees;
 				}
 			}
 			return null;
+		}
+	}
+	
+	private static Metadonnees parseTarArchive(String ref, String prefix, InputStream is) {
+		Metadonnees metadonnees = null;
+		try (ArchiveInputStream i = new ArchiveStreamFactory().createArchiveInputStream(is)) {
+			ArchiveEntry entry;
+			
+			while ((entry = i.getNextEntry()) != null) {
+				log.info("In entry {}, {}", entry.getName(), entry.getSize());
+				if (entry.getName().indexOf("breaks") < 0) {
+					if (entry.getName().startsWith(prefix)) {
+						if (!i.canReadEntryData(entry)) {
+							// log something?
+							continue;
+						}
+						log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
+						metadonnees = parsePublication(i);
+					} else {
+						log.info("This entry {} is not the one requested", entry.getName());
+					}
+				}
+				if (entry.getName().startsWith("PARU")) {
+					log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
+					metadonnees = parseParution(i);
+				}
+			}
+			return metadonnees;
+		} catch (Exception e) {
+			log.error("Error while analysing archive {}: {}", ref, e.getMessage());
+			return metadonnees;
 		}
 	}
 	
@@ -308,7 +321,71 @@ public class ArchiveParser {
 			}
 		} catch (Exception e) {
 			log.error("Error while analysing archive {}: {}", ref, e.getMessage());
-			
+			if (e instanceof CompressorException) {
+				log.info("Trying analyze without compressor for archive {}", ref);
+				return getCompteRendu(ref, session, false);
+			}
+		}
+		return compteRendu;
+	}
+	
+	public static CompteRendu getCompteRendu(String ref, Integer session, boolean compressor) {
+		if (compressor) {
+			return getCompteRendu(ref, session);
+		} else {
+			log.info("GetCompteRendu, Analysing {} archive", ref);
+			Path uploadPath = Constants.getDatasetPath(ref);
+			CompteRendu compteRendu = null;
+			try (InputStream fi = Files.newInputStream(uploadPath);
+				 InputStream bi = new BufferedInputStream(fi);
+				 
+				 ArchiveInputStream i = new ArchiveStreamFactory()
+						 .createArchiveInputStream(new BufferedInputStream(bi))) {
+				ArchiveEntry entry;
+				while ((entry = i.getNextEntry()) != null) {
+					log.info("In entry {}, {}", entry.getName(), entry.getSize());
+					if (entry.getName().indexOf(".tar") >= 0) {
+						return parseTarArchive(ref, session, i);
+					}
+				}
+			} catch (Exception e) {
+				log.error("Error while analysing archive {}: {}", ref, e.getMessage());
+				if (e instanceof CompressorException) {
+					log.info("Trying analyze without compressor for archive {}", ref);
+					return getCompteRendu(ref, session, false);
+				}
+			}
+			return compteRendu;
+		}
+		
+	}
+	
+	public static CompteRendu parseTarArchive(String ref, Integer session, InputStream is) {
+		CompteRendu compteRendu = null;
+		try (
+			 ArchiveInputStream i = new ArchiveStreamFactory()
+					 .createArchiveInputStream(new BufferedInputStream(is))) {
+			ArchiveEntry entry;
+			while ((entry = i.getNextEntry()) != null) {
+				log.info("In entry {}, {}", entry.getName(), entry.getSize());
+				if (entry.getName().startsWith(Constants.CRI_PREFIX)) {
+					if (!i.canReadEntryData(entry)) {
+						// log something?
+						continue;
+					}
+					log.info("Parsing entry {}, {}", entry.getName(), entry.getSize());
+					
+					compteRendu = parseComptesRendus(i, session);
+				} else {
+					log.info("This entry {} is not the one requested", entry.getName());
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error while analysing archive {}: {}", ref, e.getMessage());
+			if (e instanceof CompressorException) {
+				log.info("Trying analyze without compressor for archive {}", ref);
+				return getCompteRendu(ref, session, false);
+			}
 		}
 		return compteRendu;
 	}
@@ -567,10 +644,10 @@ public class ArchiveParser {
 				
 				switch(elementName.toLowerCase()) {
 					case Constants.ELEMENT_LIBELLE:
-						valeur.setLibelle(reader.getElementText());
+						valeur.setLibelle(reader.getElementText().trim());
 						break;
 					case Constants.ELEMENT_VALEUR:
-						valeur.setValeur(Integer.parseInt(reader.getElementText()));
+						valeur.setValeur(Integer.parseInt(reader.getElementText().trim()));
 						break;
 					
 				}

@@ -20,6 +20,7 @@ import com.digigladd.helloan.utils.Urls;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
 import static akka.pattern.PatternsCS.pipe;
+import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
 
 import javax.inject.Inject;
 import java.net.URL;
@@ -30,6 +31,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -44,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.commons.io.FileUtils;
 import play.Environment;
 import scala.concurrent.ExecutionContextExecutor;
+import scala.concurrent.duration.FiniteDuration;
 
 public class SyncActor extends AbstractActorWithTimers {
 	
@@ -55,6 +59,9 @@ public class SyncActor extends AbstractActorWithTimers {
 	private final PersistentEntityRef<SyncCommand> ref;
 	private final Environment environment;
 	private final ExecutionContextExecutor executor;
+	private ConcurrentLinkedQueue<String> datasetQueue = new ConcurrentLinkedQueue<>();
+	private SyncState state = null;
+	private boolean parsing = false;
 	
 	public static Props props() {
 		return Props.create(SyncActor.class);
@@ -67,10 +74,6 @@ public class SyncActor extends AbstractActorWithTimers {
 	public static final class Fetch {
 		public final Optional<String> ref;
 		
-		public Fetch() {
-			this.ref = Optional.empty();
-		}
-		
 		public Fetch(String ref) {
 			this.ref = Optional.of(ref);
 		}
@@ -82,11 +85,9 @@ public class SyncActor extends AbstractActorWithTimers {
 					 Environment environment) {
 		this.persistentEntityRegistry = persistentEntityRegistry;
 		this.persistentEntityRegistry.register(SyncEntity.class);
-		this.ref = persistentEntityRegistry.refFor(SyncEntity.class, Constants.SYNC_ENTITY_ID);
+		this.ref = persistentEntityRegistry.refFor(SyncEntity.class, Constants.SYNC_ENTITY_ID).withAskTimeout(FiniteDuration.create(3, TimeUnit.SECONDS));
 		this.environment = environment;
 		this.executor = context().dispatcher();
-		//need a initial tick!
-		getTimers().startSingleTimer("time-of-origin", new Tick(), Duration.ofSeconds(30));
 	}
 	
 	@Override
@@ -94,40 +95,86 @@ public class SyncActor extends AbstractActorWithTimers {
 		return receiveBuilder()
 				.match(Tick.class, this::tick)
 				.match(Fetch.class, this::fetch)
+				.match(SyncCommand.AddDataset.class, this::handleEntityCommand)
+				.match(SyncState.class, this::handleSyncState)
 				.build();
 	}
 	
+	private void handleSyncState(SyncState state) {
+		this.state = state;
+		self().tell(new Tick(), self());
+	}
+	
 	private void fetch(Fetch fetch) {
-		log.info("Received Fetch! {}", fetch);
-		final String lastRef = fetch.ref.orElse("");
-		ref.ask(new SyncCommand.Get()).thenApply(
-				state -> {
-					Optional<Dataset> dataset = state.getDatasets().stream().filter(f -> !f.fetched && f.getRef() != lastRef).findFirst();
-					if (dataset.isPresent()) {
-						return this.fetchDataset(dataset.get().getRef());
-					} else {
-						log.info("No more dataset to fetch, schedule a tick in 12 hours");
-						getTimers().startSingleTimer("time-of-redemption", new Tick(), Duration.ofHours(12));
-						return CompletableFuture.completedFuture(Done.getInstance());
-					}
-				}
-		);
+		log.info("Received Fetch! {}", fetch.ref.get());
+		if (fetch.ref.isPresent()) {
+			this.fetchDataset(fetch.ref.get());
+		} else {
+			log.error("Fetch is empty!");
+		}
 	}
 	
 	private void tick(Tick tick) {
 		//a tick triggers a full parsing of the external repo to get the list of all datasets available.
 		log.info("Received tick!");
-		CompletionStage<PSet<String>> datasets = CompletableFuture.completedFuture(HashTreePSet.empty());
-		for (CompletionStage<Set<String>> stage : Stream.iterate(Integer.parseInt(Constants.START_YEAR), n -> n +1)
-				.limit(Integer.parseInt(getCurrentYear())-Integer.parseInt(Constants.START_YEAR)+1)
-				.map(this::getDatasets)
-				.collect(Collectors.toList())) {
-			datasets = datasets.thenCombine(
-					stage, (d1,d2) -> d1.plusAll(d2)
+		if (state != null) {
+			if (!parsing) {
+				parsing = true;
+				CompletionStage<PSet<String>> datasets = CompletableFuture.completedFuture(HashTreePSet.empty());
+				
+				for (CompletionStage<Set<String>> stage : Stream.iterate(Integer.parseInt(Constants.START_YEAR), n -> n + 1)
+						.limit(Integer.parseInt(getCurrentYear()) - Integer.parseInt(Constants.START_YEAR) + 1)
+						.map(this::getDatasets)
+						.collect(Collectors.toList())) {
+					datasets = datasets.thenCombine(
+							stage, (d1, d2) -> d1.plusAll(d2)
+					);
+				}
+				
+				
+				datasets.thenAccept(
+						set -> {
+							datasetQueue.addAll(set);
+							createDataset();
+							log.info("Schedule next time of redemption, {} datasets to fetch", datasetQueue.size());
+							getTimers().startSingleTimer("time-of-redemption", new Tick(), Duration.ofHours(12));
+						}
+				);
+			}
+		} else {
+			CompletionStage<SyncState> currentState = ref.ask(new SyncCommand.Get());
+			currentState.exceptionally(t -> {
+				log.error("Get sync failed {}",t.getMessage());
+				self().tell(new Tick(), self());
+				return null;
+			});
+			currentState.thenAccept(
+					state -> {
+						this.state = state;
+						self().tell(new Tick(),self());
+					}
 			);
 		}
-		datasets.thenApply(
-				set -> pipe(ref.ask(new SyncCommand.AddDatasets(set)), executor).to(self())
+		
+		
+		
+	}
+	
+	private void createDataset() {
+		if (datasetQueue.size() > 0) {
+			self().tell(new SyncCommand.AddDataset(datasetQueue.poll()), self());
+		} else {
+			log.info("No more dataset to fetch");
+		}
+	}
+	
+	private CompletionStage<Done> handleEntityCommand(SyncCommand.AddDataset cmd) {
+		return ref.ask(cmd).thenApply(
+				done -> {
+					log.info("{} successfully done!", cmd);
+					createDataset();
+					return Done.getInstance();
+				}
 		);
 	}
 	
@@ -148,8 +195,8 @@ public class SyncActor extends AbstractActorWithTimers {
 							String href = java.net.URLDecoder.decode(matcher.group(1).replaceAll("\"","").replaceAll("'",""), "UTF-8");
 							if (href.startsWith(Constants.DATA_ROOT_DIR)) {
 								String ref = Urls.extractRef(href);
-								log.info("Found Dataset {}", ref);
 								datasets.add(ref);
+								log.info("Found Dataset {}, all = {}", ref, datasets.size());
 							}
 						} catch (Exception e) {
 							log.info("Error while decoding url {}: {}",matcher.group(1),e);
@@ -160,7 +207,7 @@ public class SyncActor extends AbstractActorWithTimers {
 		);
 	}
 	
-	private CompletionStage<Done> fetchDataset(String fetch) {
+	private CompletionStage<Done> fetchDataset(final String fetch) {
 		log.info("Fetch dataset {}!", fetch);
 		String url = Urls.getDataset(fetch);
 		Path uploadPath = Constants.getDatasetPath(fetch);
