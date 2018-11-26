@@ -35,7 +35,8 @@ lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
       lombok,
       akkaHttp,
       akkaStream,
-      apacheCommonsIO
+      apacheCommonsIO,
+      playFilters
     )
   )
   .settings(
@@ -64,7 +65,8 @@ lazy val `helloan-utils` = (project in file("helloan-utils"))
       lagomJavadslApi,
       apacheCommonsIO,
       apacheCommonsCompress,
-      lombok
+      lombok,
+      playFilters
     )
   )
 
@@ -90,7 +92,8 @@ lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl
       lagomLogback,
       lagomJavadslTestKit,
       lombok,
-      cassandraExtras
+      cassandraExtras,
+      playFilters
     )
   )
   .settings(
@@ -131,7 +134,8 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
       lagomLogback,
       lagomJavadslTestKit,
       lombok,
-      cassandraExtras
+      cassandraExtras,
+      playFilters
     )
   )
   .settings(
@@ -159,6 +163,7 @@ val apacheCommonsIO = "commons-io" % "commons-io" % "2.6"
 val apacheCommonsCompress = "org.apache.commons" % "commons-compress" % "1.18"
 val cassandraExtras = "com.datastax.cassandra" % "cassandra-driver-extras" % "3.2.0"
 val persistenceCassandra = "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.89"
+val playFilters = "com.typesafe.play" %% "filters-helpers" % "2.6.20"
 
 def common = Seq(
   javacOptions in compile += "-parameters"
