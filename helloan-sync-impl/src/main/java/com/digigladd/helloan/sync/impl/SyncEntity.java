@@ -71,7 +71,7 @@ public class SyncEntity extends PersistentEntity<SyncCommand, SyncEvent, SyncSta
         
         b.setEventHandler(SyncEvent.DatasetAdded.class, evt -> {
         	log.info("eventHandler {}", evt);
-            Optional<LocalDateTime> lastParsed = state().getLastParsed();
+            Optional<LocalDateTime> lastParsed = Optional.of(LocalDateTime.now());
             SyncState newState = new SyncState(
 					Optional.of(
 							state().getDatasets().plus(new Dataset(evt.dataset, Optional.empty(), Optional.empty()))
