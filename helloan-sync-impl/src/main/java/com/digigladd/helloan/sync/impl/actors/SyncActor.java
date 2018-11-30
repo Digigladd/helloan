@@ -150,9 +150,6 @@ public class SyncActor extends AbstractActorWithTimers {
 					}
 			);
 		}
-		
-		
-		
 	}
 	
 	private void createDataset() {
@@ -168,9 +165,9 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private CompletionStage<Done> handleEntityCommand(SyncCommand.AddDataset cmd) {
-		return ref.ask(cmd).thenApply(
-				done -> {
-					log.info("handleEntityCommand {}, {}", cmd, done);
+		return ref.ask(cmd).handle(
+				(done, t) -> {
+					log.info("handleEntityCommand {}, {}, {}", cmd, done, t.getMessage());
 					createDataset();
 					return Done.getInstance();
 				}
