@@ -131,6 +131,7 @@ public class SyncActor extends AbstractActorWithTimers {
 				datasets.thenAccept(
 						set -> {
 							datasetQueue.addAll(set);
+							log.info("Queue size {}", datasetQueue.size());
 							createDataset();
 						}
 				);
