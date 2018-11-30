@@ -132,8 +132,6 @@ public class SyncActor extends AbstractActorWithTimers {
 						set -> {
 							datasetQueue.addAll(set);
 							createDataset();
-							log.info("Schedule next time of redemption, {} datasets to fetch", datasetQueue.size());
-							getTimers().startSingleTimer("time-of-redemption", new Tick(), Duration.ofHours(12));
 						}
 				);
 			}
@@ -162,6 +160,9 @@ public class SyncActor extends AbstractActorWithTimers {
 			self().tell(new SyncCommand.AddDataset(datasetQueue.poll()), self());
 		} else {
 			log.info("createDataset, no more dataset to fetch");
+			parsing = false;
+			log.info("Schedule next time of redemption, {} datasets to fetch", datasetQueue.size());
+			getTimers().startSingleTimer("time-of-redemption", new Tick(), Duration.ofHours(12));
 		}
 	}
 	
