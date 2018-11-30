@@ -165,13 +165,19 @@ public class SyncActor extends AbstractActorWithTimers {
 	}
 	
 	private CompletionStage<Done> handleEntityCommand(SyncCommand.AddDataset cmd) {
-		return ref.ask(cmd).handle(
-				(done, t) -> {
-					log.info("handleEntityCommand {}, {}, {}", cmd, done, t.getMessage());
-					createDataset();
-					return Done.getInstance();
-				}
-		);
+		if (state.getDatasets().stream().filter(f -> f.getRef().equalsIgnoreCase(cmd.getRef())).count() > 0) {
+			log.info("handleEntityCommand {}, already exists", cmd);
+			createDataset();
+			return CompletableFuture.completedFuture(Done.getInstance());
+		} else {
+			return ref.ask(cmd).handle(
+					(done, t) -> {
+						log.info("handleEntityCommand {}, {}, {}", cmd, done, t.getMessage());
+						createDataset();
+						return Done.getInstance();
+					}
+			);
+		}
 	}
 	
 	private CompletionStage<Set<String>> getDatasets(final Integer year) {
