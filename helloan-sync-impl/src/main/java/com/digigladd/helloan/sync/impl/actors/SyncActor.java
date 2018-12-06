@@ -172,7 +172,11 @@ public class SyncActor extends AbstractActorWithTimers {
 		} else {
 			return ref.ask(cmd).handle(
 					(done, t) -> {
-						log.info("handleEntityCommand {}, {}, {}", cmd, done, t.getMessage());
+						if (t != null) {
+							log.info("handleEntityCommand {}, {}, {}", cmd, "not done", t.getMessage());
+						} else {
+							log.info("handleEntityCommand {}, {}, {}", cmd, done, "");
+						}
 						createDataset();
 						return Done.getInstance();
 					}
