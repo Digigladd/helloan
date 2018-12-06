@@ -151,6 +151,7 @@ public class ArchiveParser {
 	private static Metadonnees parseParution(InputStream is) {
 		final XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty("javax.xml.stream.isCoalescing",Boolean.TRUE);
+		factory.setProperty("javax.xml.stream.isReplacingEntityReferences",Boolean.FALSE);
 		try {
 			if (is != null) {
 				final XMLEventReader reader = factory.createXMLEventReader(is);
@@ -181,6 +182,7 @@ public class ArchiveParser {
 	private static Metadonnees parsePublication(InputStream is) {
 		final XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty("javax.xml.stream.isCoalescing",Boolean.TRUE);
+		factory.setProperty("javax.xml.stream.isReplacingEntityReferences",Boolean.FALSE);
 		boolean inCompteRendu = false;
 		boolean oldSchema = true;
 		try {
@@ -382,6 +384,7 @@ public class ArchiveParser {
 	private static CompteRendu parseComptesRendus(InputStream is, Integer session) {
 		final XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty("javax.xml.stream.isCoalescing",Boolean.TRUE);
+		factory.setProperty("javax.xml.stream.isReplacingEntityReferences",Boolean.FALSE);
 		CompteRendu compteRendu = null;
 		int currentSession = 0;
 		try {
