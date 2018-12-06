@@ -528,7 +528,7 @@ public class ArchiveParser {
 	}
 	
 	private static String clean(String data) {
-		data = data.replaceAll("\n","").trim();
+		data = data.replaceAll("\n","").replaceAll("\\&#\\d*+;","").trim();
 		if (data.startsWith(".")) {
 			data = data.replaceFirst(".","").trim();
 		}
