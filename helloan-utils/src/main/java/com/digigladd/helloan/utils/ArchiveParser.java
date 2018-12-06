@@ -526,19 +526,15 @@ public class ArchiveParser {
 				}
 			}
 		}
+		log.info("para text: {}", para.getText());
+		para.setText(para.getText().replaceAll("\\&#\\d*+;",""));
 		
 		return para;
 	}
 	
 	private static String clean(String data) {
-		log.info("characters {}", data);
-		try {
-			data = new String(data.getBytes("ISO-8859-1"), "UTF-8");
-		} catch (Exception e) {
 		
-		}
-		log.info("new characters {}", data);
-		data = data.replaceAll("\n","").replaceAll("\\&#\\d*+;","").trim();
+		data = data.replaceAll("\n","").trim();
 		if (data.startsWith(".")) {
 			data = data.replaceFirst(".","").trim();
 		}
