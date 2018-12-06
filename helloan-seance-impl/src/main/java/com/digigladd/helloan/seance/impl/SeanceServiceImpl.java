@@ -34,7 +34,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.digigladd.helloan.utils.CompletionStageUtils.askDone;
 import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
+import static com.digigladd.helloan.utils.CompletionStageUtils.orDone;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class SeanceServiceImpl implements SeanceService {
@@ -273,9 +275,12 @@ public class SeanceServiceImpl implements SeanceService {
 								return CompletableFuture.completedFuture(Done.getInstance());
 							}
 						}
-					).collect(Collectors.toList()));
+					).collect(Collectors.toList())
+			).thenApply(
+					done -> askDone(log, "toSeances")
+			);
 			
 		}
-		return CompletableFuture.completedFuture(Done.getInstance());
+		return orDone(log, "toSeances");
 	}
 }

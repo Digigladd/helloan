@@ -38,7 +38,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import static com.digigladd.helloan.utils.CompletionStageUtils.askDone;
 import static com.digigladd.helloan.utils.CompletionStageUtils.doAll;
+import static com.digigladd.helloan.utils.CompletionStageUtils.orDone;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class PublicationServiceImpl implements PublicationService {
@@ -108,10 +110,12 @@ public class PublicationServiceImpl implements PublicationService {
 											meta.getTypeSession(),
 											meta.getNumSeance(),
 											meta.getRef()
-									)));
+									))).thenApply(
+											done -> askDone(log,"createPublication")
+									);
 						}
 				)
-				.orElse(CompletableFuture.completedFuture(Done.getInstance()));
+				.orElse(orDone(log,"createPublication"));
 	}
 	
 	@Override
