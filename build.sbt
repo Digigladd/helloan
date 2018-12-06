@@ -22,7 +22,7 @@ lazy val `helloan-sync-api` = (project in file("helloan-sync-api"))
   .dependsOn(`helloan-utils`)
 
 lazy val `helloan-sync-impl` = (project in file("helloan-sync-impl"))
-  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
+  .enablePlugins(LagomJava, JavaAppPackaging)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -82,7 +82,7 @@ lazy val `helloan-publication-api` = (project in file("helloan-publication-api")
   .dependsOn(`helloan-utils`)
 
 lazy val `helloan-publication-impl` = (project in file("helloan-publication-impl"))
-  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
+  .enablePlugins(LagomJava, JavaAppPackaging)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -124,7 +124,7 @@ lazy val `helloan-seance-api` = (project in file("helloan-seance-api"))
   )
 
 lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
-  .enablePlugins(LagomJava, SbtReactiveAppPlugin)
+  .enablePlugins(LagomJava, JavaAppPackaging)
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
@@ -157,13 +157,13 @@ lazy val `helloan-seance-impl` = (project in file("helloan-seance-impl"))
   .dependsOn(`helloan-seance-api`,`helloan-publication-api`,`helloan-utils`)
 
 val lombok = "org.projectlombok" % "lombok" % "1.16.18"
-val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.1.5"
-val akkaStream = "com.typesafe.akka" %% "akka-stream" % "2.5.17"
+val akkaHttp = "com.typesafe.akka" %% "akka-http" % "10.0.13"
+val akkaStream = "com.typesafe.akka" %% "akka-stream" % "2.5.16"
 val apacheCommonsIO = "commons-io" % "commons-io" % "2.6"
 val apacheCommonsCompress = "org.apache.commons" % "commons-compress" % "1.18"
-val cassandraExtras = "com.datastax.cassandra" % "cassandra-driver-extras" % "3.2.0"
-val persistenceCassandra = "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.89"
-val playFilters = "com.typesafe.play" %% "filters-helpers" % "2.6.20"
+val cassandraExtras = "com.datastax.cassandra" % "cassandra-driver-extras" % "3.6.0"
+val persistenceCassandra = "com.typesafe.akka" %% "akka-persistence-cassandra" % "0.90"
+val playFilters = "com.typesafe.play" %% "filters-helpers" % "2.6.17"
 
 def common = Seq(
   javacOptions in compile += "-parameters"
